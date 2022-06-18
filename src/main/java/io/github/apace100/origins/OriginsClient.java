@@ -45,7 +45,7 @@ public class OriginsClient {
 	}
 
 	public static void clientSetup(FMLClientSetupEvent event) {
-		ItemBlockRenderTypes.setRenderLayer(ModBlocks.TEMPORARY_COBWEB.get(), RenderType.cutout());
+		event.enqueueWork(() -> ItemBlockRenderTypes.setRenderLayer(ModBlocks.TEMPORARY_COBWEB.get(), RenderType.cutout()));
 
 		ClientRegistry.registerKeyBinding(usePrimaryActivePowerKeybind);
 		ClientRegistry.registerKeyBinding(useSecondaryActivePowerKeybind);
