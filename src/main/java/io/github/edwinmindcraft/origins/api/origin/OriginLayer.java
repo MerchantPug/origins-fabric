@@ -25,18 +25,18 @@ import java.util.stream.Collectors;
 public final class OriginLayer extends ForgeRegistryEntry.UncheckedRegistryEntry<OriginLayer> implements Comparable<OriginLayer> {
 
 	public static final Codec<OriginLayer> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-			Codec.INT.fieldOf("order").forGetter(OriginLayer::order),
+			CalioCodecHelper.INT.fieldOf("order").forGetter(OriginLayer::order),
 			CalioCodecHelper.setOf(ConditionedOrigin.CODEC).fieldOf("origins").forGetter(OriginLayer::conditionedOrigins),
-			Codec.BOOL.fieldOf("enabled").forGetter(OriginLayer::enabled),
+			CalioCodecHelper.BOOL.fieldOf("enabled").forGetter(OriginLayer::enabled),
 			CalioCodecHelper.COMPONENT_CODEC.fieldOf("name").forGetter(OriginLayer::name),
 			CalioCodecHelper.COMPONENT_CODEC.fieldOf("missing_name").forGetter(OriginLayer::missingName),
 			CalioCodecHelper.COMPONENT_CODEC.fieldOf("missing_description").forGetter(OriginLayer::missingDescription),
-			Codec.BOOL.fieldOf("allow_random").forGetter(OriginLayer::allowRandom),
-			Codec.BOOL.fieldOf("allow_random_unchoosable").forGetter(OriginLayer::allowRandomUnchoosable),
+			CalioCodecHelper.BOOL.fieldOf("allow_random").forGetter(OriginLayer::allowRandom),
+			CalioCodecHelper.BOOL.fieldOf("allow_random_unchoosable").forGetter(OriginLayer::allowRandomUnchoosable),
 			CalioCodecHelper.setOf(ResourceLocation.CODEC).fieldOf("random_exclusions").forGetter(OriginLayer::randomExclusions),
 			CalioCodecHelper.optionalField(ResourceLocation.CODEC, "default").forGetter(x -> Optional.ofNullable(x.defaultOrigin())),
-			Codec.BOOL.fieldOf("auto_choose").forGetter(OriginLayer::autoChoose),
-			CalioCodecHelper.optionalField(Codec.BOOL, "hidden", false).forGetter(OriginLayer::hidden),
+			CalioCodecHelper.BOOL.fieldOf("auto_choose").forGetter(OriginLayer::autoChoose),
+			CalioCodecHelper.optionalField(CalioCodecHelper.BOOL, "hidden", false).forGetter(OriginLayer::hidden),
 			CalioCodecHelper.optionalField(GuiTitle.CODEC, "gui_title", GuiTitle.DEFAULT).forGetter(OriginLayer::title)
 	).apply(instance, OriginLayer::new));
 
