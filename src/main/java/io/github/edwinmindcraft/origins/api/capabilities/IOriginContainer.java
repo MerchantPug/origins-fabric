@@ -91,6 +91,11 @@ public interface IOriginContainer extends INBTSerializable<Tag> {
 	void tick();
 
 	/**
+	 * Server-side: Confirms that the client did receive the synchronization data.
+	 */
+	void validateSynchronization();
+
+	/**
 	 * Returns the packet used to synchronize origins with the client.
 	 *
 	 * @return The generated {@link S2CSynchronizeOrigin} packet.

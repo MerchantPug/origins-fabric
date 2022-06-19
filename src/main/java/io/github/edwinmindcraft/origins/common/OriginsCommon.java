@@ -19,7 +19,7 @@ import net.minecraftforge.network.simple.SimpleChannel;
 import java.util.function.Function;
 
 public class OriginsCommon {
-	private static final String NETWORK_VERSION = "1.0";
+	private static final String NETWORK_VERSION = "1.1";
 
 	public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(Origins.identifier("network"), () -> NETWORK_VERSION, NETWORK_VERSION::equals, NETWORK_VERSION::equals);
 
@@ -53,6 +53,9 @@ public class OriginsCommon {
 		CHANNEL.messageBuilder(C2SChooseOrigin.class, message++, NetworkDirection.PLAY_TO_SERVER)
 				.encoder(C2SChooseOrigin::encode).decoder(withLogging(C2SChooseOrigin::decode))
 				.consumer(C2SChooseOrigin::handle).add();
+		CHANNEL.messageBuilder(C2SAcknowledgeOrigins.class, message++, NetworkDirection.PLAY_TO_SERVER)
+				.encoder(C2SAcknowledgeOrigins::encode).decoder(withLogging(C2SAcknowledgeOrigins::decode))
+				.consumer(C2SAcknowledgeOrigins::handle).add();
 
 		Origins.LOGGER.debug("Registered {} packets", message);
 	}

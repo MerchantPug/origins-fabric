@@ -3,6 +3,7 @@ package io.github.edwinmindcraft.origins.common.network;
 import com.google.common.collect.ImmutableMap;
 import io.github.edwinmindcraft.origins.api.OriginsAPI;
 import io.github.edwinmindcraft.origins.client.OriginsClientUtils;
+import io.github.edwinmindcraft.origins.common.OriginsCommon;
 import io.github.edwinmindcraft.origins.common.capabilities.OriginContainer;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
@@ -11,6 +12,7 @@ import net.minecraft.world.level.Level;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.network.PacketDistributor;
 
 import java.util.Map;
 import java.util.function.Supplier;
@@ -47,6 +49,7 @@ public record S2CSynchronizeOrigin(int entity, Map<ResourceLocation, ResourceLoc
 			entity.getCapability(OriginsAPI.ORIGIN_CONTAINER).ifPresent(x -> {
 				if (x instanceof OriginContainer container) {
 					container.acceptSynchronization(this.origins(), this.hadAllOrigins());
+					OriginsCommon.CHANNEL.send(PacketDistributor.SERVER.noArg(), new C2SAcknowledgeOrigins());
 				}
 			});
 		});

@@ -36,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public class OriginContainer implements IOriginContainer, ICapabilitySerializable<Tag> {
@@ -146,9 +147,9 @@ public class OriginContainer implements IOriginContainer, ICapabilitySerializabl
 				}
 			});
 		}
-		if (this.shouldSync() && !this.player.level.isClientSide()) {
+		if (this.shouldSync() && !this.player.level.isClientSide() && this.syncCooldown.decrementAndGet() <= 0) {
 			OriginsCommon.CHANNEL.send(PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> this.player), this.getSynchronizationPacket());
-			this.synchronization.compareAndSet(true, false);
+			this.syncCooldown.set(20);
 			ApoliAPI.synchronizePowerContainer(this.player);
 		}
 	}
@@ -301,5 +302,12 @@ public class OriginContainer implements IOriginContainer, ICapabilitySerializabl
 			this.setOrigin(layer, origin1);
 		}
 		this.hadAllOrigins.set(tag.getBoolean("HadAllOrigins"));
+	}
+
+	private final AtomicInteger syncCooldown = new AtomicInteger(0);
+	@Override
+	public void validateSynchronization() {
+		this.synchronization.compareAndSet(true, false);
+		this.syncCooldown.set(0);
 	}
 }
