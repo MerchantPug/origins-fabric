@@ -13,13 +13,16 @@ import io.github.apace100.calio.data.SerializableDataTypes;
 import io.github.edwinmindcraft.apoli.api.power.configuration.ConfiguredEntityCondition;
 import io.github.edwinmindcraft.apoli.api.registry.ApoliBuiltinRegistries;
 import io.github.edwinmindcraft.apoli.api.registry.ApoliDynamicRegistries;
+import io.github.edwinmindcraft.calio.api.network.IContextAwareCodec;
 import io.github.edwinmindcraft.calio.api.registry.ICalioDynamicRegistryManager;
 import io.github.edwinmindcraft.origins.api.registry.OriginsDynamicRegistries;
 import net.minecraft.core.Holder;
 import net.minecraft.core.WritableRegistry;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
 import java.util.Set;
@@ -44,8 +47,14 @@ public record ConditionedOrigin(
 		return co.origins().stream().findFirst().map(ResourceLocation::toString).map(DataResult::success).orElseGet(() -> DataResult.error("Unknown Error"));
 	});
 
+	//Use the large codec since NBT Lists cannot support multiple types, safe for all operations.
 	public static final Codec<ConditionedOrigin> CODEC = Codec.either(STRING_CODEC, LARGE_CODEC)
+			.xmap(e -> e.map(Function.identity(), Function.identity()), Either::right);
+
+	//Unfortunately, this is unsafe for network operations.
+	private static final Codec<ConditionedOrigin> JSON_CODEC = Codec.either(STRING_CODEC, LARGE_CODEC)
 			.xmap(e -> e.map(Function.identity(), Function.identity()), co -> co.origins().size() == 1 && co.condition().is(ApoliDynamicRegistries.CONDITION_DEFAULT) ? Either.left(co) : Either.right(co));
+
 
 	public Stream<ResourceLocation> stream(Player player) {
 		return ConfiguredEntityCondition.check(this.condition(), player) ? this.origins().stream() : Stream.empty();
@@ -69,7 +78,7 @@ public record ConditionedOrigin(
 
 		@Override
 		public ConditionedOrigin deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
-			DataResult<Pair<ConditionedOrigin, JsonElement>> result = CODEC.decode(JsonOps.INSTANCE, json);
+			DataResult<Pair<ConditionedOrigin, JsonElement>> result = JSON_CODEC.decode(JsonOps.INSTANCE, json);
 			return result.getOrThrow(false, s -> {
 				throw new JsonParseException("Expected origin in layer to be either a string or an object.");
 			}).getFirst();
@@ -79,7 +88,7 @@ public record ConditionedOrigin(
 		public JsonElement serialize(ConditionedOrigin src, Type typeOfSrc, JsonSerializationContext context) {
 			if (src.isEmpty())
 				return new JsonPrimitive("<empty conditioned origin>");
-			return CODEC.encodeStart(JsonOps.INSTANCE, src).getOrThrow(false, s -> {});
+			return JSON_CODEC.encodeStart(JsonOps.INSTANCE, src).getOrThrow(false, s -> {});
 		}
 	}
 }
