@@ -19,6 +19,7 @@ import io.github.edwinmindcraft.origins.common.OriginsCommon;
 import io.github.edwinmindcraft.origins.common.network.S2CSynchronizeOrigin;
 import io.github.edwinmindcraft.origins.common.registry.OriginRegisters;
 import net.minecraft.core.Direction;
+import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
@@ -131,7 +132,7 @@ public class OriginContainer implements IOriginContainer, ICapabilitySerializabl
 					Set<ResourceLocation> newPowers = origin.getPowers().stream().map(registry::get).filter(Objects::nonNull).flatMap(x -> {
 						HashSet<ResourceLocation> names = new HashSet<>();
 						names.add(x.getRegistryName());
-						x.getChildren().stream().map(ConfiguredPower::getRegistryName).forEach(names::add);
+						x.getChildren().stream().filter(Holder::isBound).map(Holder::value).map(ConfiguredPower::getRegistryName).forEach(names::add);
 						return names.stream();
 					}).collect(ImmutableSet.toImmutableSet());
 					Set<ResourceLocation> toRemove = currentPowers.stream().filter(x -> !newPowers.contains(x)).collect(Collectors.toSet());

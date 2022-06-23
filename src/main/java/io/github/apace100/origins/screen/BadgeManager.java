@@ -13,6 +13,7 @@ import io.github.edwinmindcraft.apoli.api.power.ITogglePower;
 import io.github.edwinmindcraft.apoli.api.power.configuration.ConfiguredPower;
 import io.github.edwinmindcraft.calio.api.event.CalioDynamicRegistryEvent;
 import io.github.edwinmindcraft.origins.common.network.S2CSynchronizeBadges;
+import net.minecraft.core.Holder;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.common.MinecraftForge;
 import org.jetbrains.annotations.Nullable;
@@ -64,8 +65,10 @@ public class BadgeManager {
 		if (badges.isEmpty()) {
 			Badge autoBadge = this.findBadge(power);
 			if (autoBadge == null) {
-				for (ConfiguredPower<?, ?> subPower : power.getContainedPowers().values()) {
-					autoBadge = this.findBadge(subPower);
+				for (Holder<ConfiguredPower<?, ?>> subPower : power.getContainedPowers().values()) {
+					if (!subPower.isBound())
+						continue;
+					autoBadge = this.findBadge(subPower.value());
 					if (autoBadge != null)
 						break;
 				}

@@ -3,6 +3,7 @@ package io.github.apace100.origins.util;
 import io.github.apace100.apoli.power.PowerTypeRegistry;
 import io.github.edwinmindcraft.apoli.api.ApoliAPI;
 import io.github.edwinmindcraft.apoli.api.power.configuration.ConfiguredPower;
+import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceLocation;
 
@@ -33,7 +34,7 @@ public class PowerKeyManager {
 				return "";
 			return powerType.getKey(null)
 					.map(key -> key.key().equals("none") ? "key.origins.primary_active" : key.key())
-					.or(() -> powerType.getContainedPowers().values().stream().map(x -> getKeyFromPower(x.getRegistryName())).filter(x -> !x.isBlank()).findFirst())
+					.or(() -> powerType.getContainedPowers().values().stream().filter(Holder::isBound).map(Holder::value).map(x -> getKeyFromPower(x.getRegistryName())).filter(x -> !x.isBlank()).findFirst())
 					.orElse("");
 		}
 		return "";

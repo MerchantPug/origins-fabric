@@ -48,25 +48,25 @@ public class OriginsPowerProvider extends PowerGenerator {
 		super(generator, Origins.MODID, existingFileHelper);
 	}
 
-	private static Map<String, ConfiguredPower<?, ?>> makeAquaAffinity() {
-		ImmutableMap.Builder<String, ConfiguredPower<?, ?>> builder = ImmutableMap.builder();
+	private static Map<String, Holder<ConfiguredPower<?, ?>>> makeAquaAffinity() {
+		ImmutableMap.Builder<String, Holder<ConfiguredPower<?, ?>>> builder = ImmutableMap.builder();
 		Holder<ConfiguredBlockCondition<?, ?>> allow = ApoliDefaultConditions.BLOCK_DEFAULT.getHolder().orElseThrow(RuntimeException::new);
-		builder.put("underwater",
+		builder.put("underwater", Holder.direct(
 				ApoliPowers.MODIFY_BREAK_SPEED.get()
 						.configure(
 								new ModifyValueBlockConfiguration(ListConfiguration.of(new AttributeModifier(UUID.randomUUID(), "Unnamed attribute modifier", 4, AttributeModifier.Operation.MULTIPLY_TOTAL)), allow),
 								PowerData.builder().addCondition(ApoliEntityConditions.and(
 										ApoliEntityConditions.SUBMERGED_IN.get().configure(new TagConfiguration<>(FluidTags.WATER)),
 										ApoliEntityConditions.ENCHANTMENT.get().configure(new EnchantmentConfiguration(new IntegerComparisonConfiguration(Comparison.EQUAL, 0), Enchantments.AQUA_AFFINITY, EnchantmentConfiguration.Calculation.SUM))
-								)).build()));
-		builder.put("ungrounded",
+								)).build())));
+		builder.put("ungrounded", Holder.direct(
 				ApoliPowers.MODIFY_BREAK_SPEED.get()
 						.configure(
 								new ModifyValueBlockConfiguration(ListConfiguration.of(new AttributeModifier(UUID.randomUUID(), "Unnamed attribute modifier", 4, AttributeModifier.Operation.MULTIPLY_TOTAL)), allow),
 								PowerData.builder().addCondition(ApoliEntityConditions.and(
 										ApoliEntityConditions.FLUID_HEIGHT.get().configure(new FluidTagComparisonConfiguration(new DoubleComparisonConfiguration(Comparison.GREATER_THAN, 0), FluidTags.WATER)),
 										ApoliEntityConditions.ON_BLOCK.get().configure(HolderConfiguration.defaultCondition(ApoliBuiltinRegistries.CONFIGURED_BLOCK_CONDITIONS), new ConditionData(true))
-								)).build()));
+								)).build())));
 		return builder.build();
 	}
 
@@ -112,10 +112,10 @@ public class OriginsPowerProvider extends PowerGenerator {
 		this.add("water_breathing", OriginsPowerTypes.WATER_BREATHING.get().configure(NoConfiguration.INSTANCE, PowerData.DEFAULT));
 		this.add("scare_creepers", OriginsPowerTypes.SCARE_CREEPERS.get().configure(NoConfiguration.INSTANCE, PowerData.DEFAULT));
 		this.add("water_vision", ApoliPowers.MULTIPLE.get().configure(new MultipleConfiguration<>(ImmutableMap.of(
-						"vision", OriginsPowerTypes.WATER_VISION.get().configure(new WaterVisionConfiguration(1.0F), PowerData.builder()
-								.addCondition(ApoliEntityConditions.POWER_ACTIVE.get().configure(new PowerReference(Origins.identifier("water_vision_toggle")))).build()),
-						"toggle", ApoliPowers.TOGGLE_NIGHT_VISION.get().configure(new ToggleNightVisionConfiguration(true, IActivePower.Key.PRIMARY, 1.0F), PowerData.builder()
-								.addCondition(ApoliEntityConditions.SUBMERGED_IN.get().configure(new TagConfiguration<>(FluidTags.WATER))).build()))),
+						"vision", Holder.direct(OriginsPowerTypes.WATER_VISION.get().configure(new WaterVisionConfiguration(1.0F), PowerData.builder()
+								.addCondition(ApoliEntityConditions.POWER_ACTIVE.get().configure(new PowerReference(Origins.identifier("water_vision_toggle")))).build())),
+						"toggle", Holder.direct(ApoliPowers.TOGGLE_NIGHT_VISION.get().configure(new ToggleNightVisionConfiguration(true, IActivePower.Key.PRIMARY, 1.0F), PowerData.builder()
+								.addCondition(ApoliEntityConditions.SUBMERGED_IN.get().configure(new TagConfiguration<>(FluidTags.WATER))).build())))),
 				PowerData.DEFAULT));
 		this.add("no_cobweb_slowdown", OriginsPowerTypes.NO_SLOWDOWN.get().configure(new NoSlowdownConfiguration(OriginsBlockTags.COBWEBS), hidden));
 		//this.add("master_of_webs", ApoliPowers.MULTIPLE.get().configure(new MultipleConfiguration<>(makeMasterOfWebs()), PowerData.DEFAULT));
