@@ -246,8 +246,6 @@ public class OriginContainer implements IOriginContainer, ICapabilitySerializabl
 
 	@Override
 	public Tag serializeNBT() {
-		Registry<OriginLayer> registry = OriginsAPI.getLayersRegistry();
-		Registry<Origin> origins = OriginsAPI.getOriginsRegistry();
 		CompoundTag tag = new CompoundTag();
 		CompoundTag layers = new CompoundTag();
 		this.getOrigins().forEach((layer, origin) -> {
@@ -261,8 +259,6 @@ public class OriginContainer implements IOriginContainer, ICapabilitySerializabl
 		});
 		tag.put("Origins", layers);
 		tag.putBoolean("HadAllOrigins", this.hasAllOrigins());
-		if (Calio.isDebugMode())
-			Origins.LOGGER.info("NBT for player \"{}\": {}", this.getOwner().getDisplayName().getString(), tag);
 		return tag;
 	}
 
