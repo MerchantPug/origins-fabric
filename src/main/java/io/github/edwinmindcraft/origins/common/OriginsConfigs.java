@@ -1,7 +1,14 @@
 package io.github.edwinmindcraft.origins.common;
 
+import com.electronwill.nightconfig.core.Config;
+import com.google.common.collect.ImmutableList;
+import io.github.edwinmindcraft.origins.api.origin.Origin;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.common.ForgeConfigSpec;
 import org.apache.commons.lang3.tuple.Pair;
+
+import java.util.Collection;
+import java.util.Objects;
 
 public class OriginsConfigs {
 	public static class Common {
@@ -13,7 +20,36 @@ public class OriginsConfigs {
 	}
 
 	public static class Server {
-		public Server(ForgeConfigSpec.Builder builder) {}
+
+		private final ForgeConfigSpec.ConfigValue<Config> origins;
+
+		public Server(ForgeConfigSpec.Builder builder) {
+			this.origins = builder.define("origins", Config.inMemory());
+		}
+
+		public boolean isOriginEnabled(ResourceLocation origin) {
+			return this.origins.get().getOrElse(ImmutableList.of(origin.toString(), "enabled"), true);
+		}
+
+		public boolean isPowerEnabled(ResourceLocation origin, ResourceLocation power) {
+			return this.origins.get().getOrElse(ImmutableList.of(origin.toString(), power.toString()), false);
+		}
+
+		public boolean updateOriginList(Collection<Origin> origins) {
+			boolean changed = false;
+			for (Origin origin : origins) {
+				if (origin.isSpecial()) //Ignore special origins
+					continue;
+				if (this.origins.get().add(ImmutableList.of(origin.toString(), "enabled"), true))
+					changed = true;
+				for (ResourceLocation power : origin.getPowers()) {
+					if (this.origins.get().add(ImmutableList.of(origin.toString(), power.toString()), true)) {
+						changed = true;
+					}
+				}
+			}
+			return changed;
+		}
 	}
 
 	public static final ForgeConfigSpec COMMON_SPECS;

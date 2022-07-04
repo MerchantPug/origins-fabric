@@ -1,6 +1,9 @@
 package io.github.edwinmindcraft.origins.common.registry;
 
 import io.github.apace100.origins.Origins;
+import io.github.apace100.origins.badge.BadgeFactories;
+import io.github.apace100.origins.badge.BadgeFactory;
+import io.github.apace100.origins.badge.BadgeManager;
 import io.github.edwinmindcraft.apoli.api.power.factory.EntityCondition;
 import io.github.edwinmindcraft.apoli.api.power.factory.PowerFactory;
 import io.github.edwinmindcraft.apoli.api.registry.ApoliRegistries;
@@ -21,6 +24,7 @@ import net.minecraftforge.registries.RegistryObject;
 public class OriginRegisters {
 	public static final DeferredRegister<PowerFactory<?>> POWER_FACTORIES = DeferredRegister.create(ApoliRegistries.POWER_FACTORY_KEY, Origins.MODID);
 	public static final DeferredRegister<Origin> ORIGINS = DeferredRegister.create(OriginsDynamicRegistries.ORIGINS_REGISTRY, Origins.MODID);
+	public static final DeferredRegister<BadgeFactory> BADGE_FACTORIES = DeferredRegister.create(OriginsBuiltinRegistries.BADGE_FACTORY_KEY, Origins.MODID);
 	public static final DeferredRegister<EntityType<?>> ENTITY_TYPES = DeferredRegister.create(ForgeRegistries.ENTITIES, Origins.MODID);
 	public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, Origins.MODID);
 	public static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(ForgeRegistries.BLOCKS, Origins.MODID);
@@ -32,6 +36,8 @@ public class OriginRegisters {
 	public static void register() {
 		IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
 		OriginsBuiltinRegistries.ORIGINS = ORIGINS.makeRegistry(Origin.class, () -> new RegistryBuilder<Origin>().setDefaultKey(Origins.identifier("empty")));
+		OriginsBuiltinRegistries.BADGE_FACTORIES = BADGE_FACTORIES.makeRegistry(BadgeFactory.class, RegistryBuilder::new);
+		BadgeManager.init();
 
 		POWER_FACTORIES.register(bus);
 		ORIGINS.register(bus);

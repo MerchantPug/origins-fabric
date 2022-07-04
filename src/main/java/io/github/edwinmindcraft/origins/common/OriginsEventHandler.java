@@ -1,8 +1,10 @@
 package io.github.edwinmindcraft.origins.common;
 
+import com.google.common.collect.ImmutableSet;
 import io.github.apace100.apoli.Apoli;
 import io.github.apace100.apoli.mixin.EntityAccessor;
 import io.github.apace100.origins.Origins;
+import io.github.apace100.origins.badge.BadgeManager;
 import io.github.apace100.origins.command.OriginCommand;
 import io.github.apace100.origins.origin.OriginLayers;
 import io.github.apace100.origins.origin.OriginRegistry;
@@ -11,6 +13,7 @@ import io.github.apace100.origins.registry.ModDamageSources;
 import io.github.edwinmindcraft.apoli.api.component.IPowerContainer;
 import io.github.edwinmindcraft.apoli.api.registry.ApoliDynamicRegistries;
 import io.github.edwinmindcraft.calio.api.event.CalioDynamicRegistryEvent;
+import io.github.edwinmindcraft.calio.api.event.DynamicRegistrationEvent;
 import io.github.edwinmindcraft.calio.api.registry.ICalioDynamicRegistryManager;
 import io.github.edwinmindcraft.origins.api.OriginsAPI;
 import io.github.edwinmindcraft.origins.api.capabilities.IOriginContainer;
@@ -26,6 +29,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.advancements.Advancement;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.FluidTags;
@@ -48,7 +52,9 @@ import net.minecraftforge.server.ServerLifecycleHooks;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Mod.EventBusSubscriber(modid = Origins.MODID)
 public class OriginsEventHandler {
@@ -87,7 +93,7 @@ public class OriginsEventHandler {
 	@SubscribeEvent
 	public static void onDataSync(OnDatapackSyncEvent event) {
 		PacketDistributor.PacketTarget target = event.getPlayer() == null ? PacketDistributor.ALL.noArg() : PacketDistributor.PLAYER.with(event::getPlayer);
-		OriginsCommon.CHANNEL.send(target, Origins.badgeManager.createPacket());
+		OriginsCommon.CHANNEL.send(target, BadgeManager.createPacket());
 		if (event.getPlayer() != null)
 			IOriginContainer.get(event.getPlayer()).map(IOriginContainer::getSynchronizationPacket).ifPresent(packet -> OriginsCommon.CHANNEL.send(target, packet));
 	}
@@ -200,6 +206,29 @@ public class OriginsEventHandler {
 				} else if (player.getAirSupply() < player.getMaxAirSupply()) {
 					player.setAirSupply(increaseAirSupply(player, player.getAirSupply()));
 				}
+			}
+		}
+	}
+
+	@SubscribeEvent
+	public static void onOriginLoad(DynamicRegistrationEvent<Origin> event) {
+		if (event.getOriginal().isSpecial()) //Nothing done on special origins
+			return;
+		if (!OriginsConfigs.SERVER.isOriginEnabled(event.getRegistryName()))
+			event.withCancellationReason("Disabled by config").setCanceled(true);
+		else {
+			Origin original = event.getOriginal();
+			HashSet<ResourceLocation> powers = new HashSet<>(original.getPowers());
+			powers.removeIf(x -> !OriginsConfigs.SERVER.isPowerEnabled(event.getRegistryName(), x));
+			if (powers.size() != original.getPowers().size()) {
+				Origins.LOGGER.info("Powers [{}] were disabled by config for origin: {}", original.getPowers().stream()
+								.filter(x -> !powers.contains(x))
+								.map(ResourceLocation::toString)
+								.collect(Collectors.joining(",")),
+						event.getRegistryName());
+				event.setNewEntry(new Origin(ImmutableSet.copyOf(powers), original.getIcon(), original.isUnchoosable(),
+						original.getOrder(), original.getImpact(), original.getName(), original.getDescription(),
+						original.getUpgrades(), original.isSpecial()));
 			}
 		}
 	}

@@ -13,7 +13,5 @@ public class ModTags {
 	public static final TagKey<Block> NATURAL_STONE = OriginsBlockTags.NATURAL_STONE;
 	public static final TagKey<Item> RANGED_WEAPONS = OriginsItemTags.RANGED_WEAPONS;
 
-	public static void register() {
-
-	}
+	public static void register() { }
 }

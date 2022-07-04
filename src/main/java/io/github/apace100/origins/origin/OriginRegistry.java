@@ -14,7 +14,6 @@ public class OriginRegistry {
 
 	private static final Map<io.github.edwinmindcraft.origins.api.origin.Origin, Origin> CACHE_MAP = new ConcurrentHashMap<>();
 
-
 	@Deprecated
 	public static Origin register(Origin origin) {
 		return register(origin.getIdentifier(), origin);
@@ -111,5 +110,9 @@ public class OriginRegistry {
 
 	public static void reset() {
 		clear();
+	}
+
+	public static void remove(ResourceLocation id) {
+		throw new UnsupportedOperationException("Remove origins by cancelling a registration event.");
 	}
 }

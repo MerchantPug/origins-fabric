@@ -1,5 +1,9 @@
 package io.github.apace100.origins;
 
+import com.google.common.collect.ImmutableList;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
+import io.github.apace100.apoli.power.PowerType;
 import io.github.apace100.apoli.util.NamespaceAlias;
 import io.github.apace100.origins.command.LayerArgumentType;
 import io.github.apace100.origins.command.OriginArgumentType;
@@ -7,7 +11,6 @@ import io.github.apace100.origins.origin.Origin;
 import io.github.apace100.origins.power.OriginsEntityConditions;
 import io.github.apace100.origins.power.OriginsPowerTypes;
 import io.github.apace100.origins.registry.*;
-import io.github.apace100.origins.screen.BadgeManager;
 import io.github.apace100.origins.util.ChoseOriginCriterion;
 import io.github.edwinmindcraft.origins.api.OriginsAPI;
 import io.github.edwinmindcraft.origins.common.OriginsCommon;
@@ -32,8 +35,8 @@ public class Origins {
 	public static String VERSION = "";
 	public static final Logger LOGGER = LogManager.getLogger(Origins.class);
 
-	//public static ServerConfig config;
-	public static BadgeManager badgeManager;
+	public static ServerConfig config = new ServerConfig();
+	//private static ConfigSerializer<ServerConfig> configSerializer;
 
 	public Origins() {
 		VERSION = ModLoadingContext.get().getActiveContainer().getModInfo().getVersion().toString();
@@ -65,11 +68,24 @@ public class Origins {
 		CriteriaTriggers.register(ChoseOriginCriterion.INSTANCE);
 		ArgumentTypes.register("origins:origin", OriginArgumentType.class, new EmptyArgumentSerializer<>(OriginArgumentType::origin));
 		ArgumentTypes.register("origins:layer", LayerArgumentType.class, new EmptyArgumentSerializer<>(LayerArgumentType::layer));
-
-		badgeManager = new BadgeManager();
 	}
 
 	public static ResourceLocation identifier(String path) {
 		return new ResourceLocation(Origins.MODID, path);
+	}
+
+	public static class ServerConfig {
+
+		public boolean isOriginDisabled(ResourceLocation originId) {
+			return !OriginsConfigs.SERVER.isOriginEnabled(originId);
+		}
+
+		public boolean isPowerDisabled(ResourceLocation originId, ResourceLocation powerId) {
+			return !OriginsConfigs.SERVER.isPowerEnabled(originId, powerId);
+		}
+
+		public boolean addToConfig(Origin origin) {
+			return OriginsConfigs.SERVER.updateOriginList(ImmutableList.of(origin.getWrapped()));
+		}
 	}
 }

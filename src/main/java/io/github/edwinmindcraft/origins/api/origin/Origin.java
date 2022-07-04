@@ -47,7 +47,8 @@ public class Origin extends ForgeRegistryEntry.UncheckedRegistryEntry<Origin> {
 			CalioCodecHelper.optionalField(CalioCodecHelper.BOOL, "special", false).forGetter(Origin::isSpecial)
 	).apply(instance, Origin::new));
 
-	public Origin(Set<ResourceLocation> powers, ItemStack icon, boolean unchoosable, int order, Impact impact, Component name, Component description, Set<OriginUpgrade> upgrades, boolean special) {
+	public Origin(Set<ResourceLocation> powers, ItemStack icon, boolean unchoosable, int order, Impact impact,
+				  Component name, Component description, Set<OriginUpgrade> upgrades, boolean special) {
 		this.powers = ImmutableSet.copyOf(powers);
 		this.icon = icon;
 		this.unchoosable = unchoosable;

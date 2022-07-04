@@ -2,8 +2,8 @@ package io.github.edwinmindcraft.origins.common.network;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
-import io.github.apace100.origins.Origins;
-import io.github.apace100.origins.screen.Badge;
+import io.github.apace100.origins.badge.Badge;
+import io.github.apace100.origins.badge.BadgeManager;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.network.NetworkEvent;
@@ -20,7 +20,7 @@ public record S2CSynchronizeBadges(Multimap<ResourceLocation, Badge> badges) {
 			ResourceLocation rl = buf.readResourceLocation();
 			int count = buf.readVarInt();
 			for (int j = 0; j < count; j++)
-				badges.put(rl, Badge.fromNetwork(buf));
+				badges.put(rl, BadgeManager.REGISTRY.receiveDataObject(buf));
 		}
 		return new S2CSynchronizeBadges(badges);
 	}
@@ -32,14 +32,14 @@ public record S2CSynchronizeBadges(Multimap<ResourceLocation, Badge> badges) {
 			buf.writeResourceLocation(entry.getKey());
 			buf.writeVarInt(entry.getValue().size());
 			for (Badge badge : entry.getValue())
-				badge.toNetwork(buf);
+				BadgeManager.REGISTRY.writeDataObject(buf, badge);
 		}
 	}
 
 	public void handle(Supplier<NetworkEvent.Context> contextSupplier) {
 		contextSupplier.get().enqueueWork(() -> {
-			Origins.badgeManager.clear();
-			this.badges.forEach(Origins.badgeManager::addBadge);
+			BadgeManager.clear();
+			this.badges.forEach(BadgeManager::putPowerBadge);
 		});
 		contextSupplier.get().setPacketHandled(true);
 	}

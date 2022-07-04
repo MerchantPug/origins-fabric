@@ -183,7 +183,7 @@
   "origins.gui.impact.medium": "Middel",
   "origins.gui.impact.high": "Hoog",
 
-  "layer.origins.origin": "Origin",
+  "layer.origins.origin.name": "Origin",
 
   "death.attack.no_water_for_gills": "%s was als een vis op het droge.",
   "death.attack.hurt_by_water": "%s was iets te lekker aan het zwemmen.",
@@ -215,7 +215,6 @@
   "origins.gui.unbound_key": "§ounbound§r",
   "origin.origins.random.name": "Random",
   "origin.origins.random.description": "You'll be assigned one of the following:",
-  "layer.origins.origin.name": "Origin",
   "layer.origins.origin.missing_origin.name": "Missing",
   "layer.origins.origin.missing_origin.description": "You do not have an Origin.",
   "death.attack.no_water_for_gills.player": "%1$s didn't manage to keep wet because they were fighting %2$s",
@@ -225,5 +224,8 @@
   "commands.origin.get.result": "%s has the following %s: %s (%s)",
   "commands.origin.gui.all": "Opened the selection GUI for %s players.",
   "commands.origin.gui.layer": "Opened the \"%2$s\" selection GUI for %1$s players.",
-  "origins.avian_sleep_fail": "You need fresh air to sleep"
+  "origins.avian_sleep_fail": "You need fresh air to sleep",
+  "enchantment.origins.water_protection.desc": "Delays damage from hydrophobia.",
+  "origins.gui.badge.recipe.crafting.shaped": "Crafting recipe (Shaped) provided by the power:",
+  "origins.gui.badge.recipe.crafting.shapeless": "Crafting recipe (Shapeless) provided by the power:"
 }

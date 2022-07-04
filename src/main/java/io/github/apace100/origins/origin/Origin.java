@@ -1,5 +1,6 @@
 package io.github.apace100.origins.origin;
 
+import io.github.apace100.apoli.power.PowerType;
 import io.github.apace100.origins.component.OriginComponent;
 import io.github.edwinmindcraft.origins.api.capabilities.IOriginContainer;
 import io.github.edwinmindcraft.origins.common.registry.OriginRegisters;
@@ -74,7 +75,7 @@ public class Origin {
 		return this.getWrapped().getRegistryName();
 	}
 
-	/*public boolean hasPowerType(PowerType<?> powerType) {
+/*	public boolean hasPowerType(PowerType<?> powerType) {
 		if (powerType.getIdentifier() == null) {
 			return false;
 		}
@@ -91,7 +92,13 @@ public class Origin {
 		return false;
 	}*/
 
-	public boolean isSpecial() {
+    public void removePowerType(PowerType<?> powerType) {
+        throw new UnsupportedOperationException("Origins are immutable in forge.");
+        //this.powerTypes.remove(powerType);
+    }
+
+
+    public boolean isSpecial() {
 		return this.getWrapped().isSpecial();
 	}
 
