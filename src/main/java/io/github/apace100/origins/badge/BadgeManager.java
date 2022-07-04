@@ -93,6 +93,8 @@ public final class BadgeManager {
 	}
 
 	public static void readCustomBadges(PowerLoadEvent.Post event) {
+		if (event.getAdditionalData("badges").isJsonNull())
+			return; //No data, clear errors.
 		ConfiguredPower<?, ?> powerType = event.getPower();
 		ResourceLocation powerId = event.getId();
 		JsonElement data = event.getAdditionalData("badges");
@@ -153,16 +155,13 @@ public final class BadgeManager {
 		PowerFactory<?> factory = event.getPower().getFactory();
 		if (factory instanceof IActivePower<?>) {
 			boolean toggle = factory instanceof ITogglePower<?>;
-			Component keyText = new TextComponent("[")
-					.append(KeyMapping.createNameSupplier(PowerKeyManager.getKeyIdentifier(event.getRegistryName())).get())
-					.append(new TextComponent("]"));
 			ResourceLocation autoBadgeId = toggle ? TOGGLE_BADGE_ID : ACTIVE_BADGE_ID;
 			if (REGISTRY.containsId(autoBadgeId)) {
 				event.getBadges().add(REGISTRY.get(autoBadgeId));
 			} else {
-				event.getBadges().add(new TooltipBadge(toggle ? TOGGLE_BADGE_SPRITE : ACTIVE_BADGE_SPRITE,
-						toggle ? new TranslatableComponent("origins.gui.badge.toggle", keyText)
-								: new TranslatableComponent("origins.gui.badge.active", keyText)
+				event.getBadges().add(new KeybindBadge(toggle ? TOGGLE_BADGE_SPRITE : ACTIVE_BADGE_SPRITE,
+						toggle ? "origins.gui.badge.toggle"
+								: "origins.gui.badge.active"
 				));
 			}
 		} else if (factory instanceof RecipePower) {

@@ -7,24 +7,22 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.common.ForgeConfigSpec;
 import org.apache.commons.lang3.tuple.Pair;
 
-import java.util.Collection;
-import java.util.Objects;
-
 public class OriginsConfigs {
-	public static class Common {
-		public Common(ForgeConfigSpec.Builder builder) {}
+	public static class Server {
+		public Server(ForgeConfigSpec.Builder builder) {}
 	}
 
 	public static class Client {
 		public Client(ForgeConfigSpec.Builder builder) {}
 	}
 
-	public static class Server {
+	public static class Common {
 
 		private final ForgeConfigSpec.ConfigValue<Config> origins;
 
-		public Server(ForgeConfigSpec.Builder builder) {
-			this.origins = builder.define("origins", Config.inMemory());
+		public Common(ForgeConfigSpec.Builder builder) {
+			//Remove validation.
+			this.origins = builder.define(ImmutableList.of("origins"), Config::inMemory, x -> x instanceof Config, Config.class);
 		}
 
 		public boolean isOriginEnabled(ResourceLocation origin) {
@@ -32,18 +30,19 @@ public class OriginsConfigs {
 		}
 
 		public boolean isPowerEnabled(ResourceLocation origin, ResourceLocation power) {
-			return this.origins.get().getOrElse(ImmutableList.of(origin.toString(), power.toString()), false);
+			return this.origins.get().getOrElse(ImmutableList.of(origin.toString(), power.toString()), true);
 		}
 
-		public boolean updateOriginList(Collection<Origin> origins) {
+		public boolean updateOriginList(Iterable<Origin> origins) {
 			boolean changed = false;
 			for (Origin origin : origins) {
-				if (origin.isSpecial()) //Ignore special origins
+				ResourceLocation registryName = origin.getRegistryName();
+				if (origin.isSpecial() || registryName == null) //Ignore special origins
 					continue;
-				if (this.origins.get().add(ImmutableList.of(origin.toString(), "enabled"), true))
+				if (this.origins.get().add(ImmutableList.of(registryName.toString(), "enabled"), true))
 					changed = true;
 				for (ResourceLocation power : origin.getPowers()) {
-					if (this.origins.get().add(ImmutableList.of(origin.toString(), power.toString()), true)) {
+					if (this.origins.get().add(ImmutableList.of(registryName.toString(), power.toString()), true)) {
 						changed = true;
 					}
 				}

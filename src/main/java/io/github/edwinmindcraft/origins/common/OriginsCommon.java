@@ -3,6 +3,7 @@ package io.github.edwinmindcraft.origins.common;
 import io.github.apace100.calio.Calio;
 import io.github.apace100.origins.Origins;
 import io.github.apace100.origins.badge.BadgeFactories;
+import io.github.apace100.origins.badge.BadgeManager;
 import io.github.apace100.origins.power.OriginsPowerTypes;
 import io.github.apace100.origins.registry.ModLoot;
 import io.github.edwinmindcraft.origins.api.capabilities.IOriginContainer;
@@ -11,8 +12,6 @@ import io.github.edwinmindcraft.origins.common.registry.OriginRegisters;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.common.capabilities.RegisterCapabilitiesEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.fml.ModLoadingContext;
-import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.network.NetworkDirection;
@@ -68,6 +67,7 @@ public class OriginsCommon {
 		OriginRegisters.register();
 		OriginsPowerTypes.register();
 		BadgeFactories.bootstrap();
+		BadgeManager.init();
 		mod.addListener(OriginsCommon::registerCapabilities);
 		mod.addListener(OriginsCommon::commonSetup);
 	}

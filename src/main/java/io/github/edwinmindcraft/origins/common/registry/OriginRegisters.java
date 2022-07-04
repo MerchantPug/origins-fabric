@@ -37,7 +37,6 @@ public class OriginRegisters {
 		IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
 		OriginsBuiltinRegistries.ORIGINS = ORIGINS.makeRegistry(Origin.class, () -> new RegistryBuilder<Origin>().setDefaultKey(Origins.identifier("empty")));
 		OriginsBuiltinRegistries.BADGE_FACTORIES = BADGE_FACTORIES.makeRegistry(BadgeFactory.class, RegistryBuilder::new);
-		BadgeManager.init();
 
 		POWER_FACTORIES.register(bus);
 		ORIGINS.register(bus);
@@ -46,5 +45,6 @@ public class OriginRegisters {
 		BLOCKS.register(bus);
 		ENCHANTMENTS.register(bus);
 		ENTITY_CONDITIONS.register(bus);
+		BADGE_FACTORIES.register(bus);
 	}
 }

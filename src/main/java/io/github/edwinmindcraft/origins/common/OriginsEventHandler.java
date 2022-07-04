@@ -140,6 +140,10 @@ public class OriginsEventHandler {
 				IOriginContainer.get(player).ifPresent(IOriginContainer::onReload);
 			}
 		}
+		//Update specs with currently loaded origins.
+		if (OriginsConfigs.COMMON.updateOriginList(event.getRegistryManager().get(OriginsDynamicRegistries.ORIGINS_REGISTRY))
+			&& OriginsConfigs.COMMON_SPECS.isLoaded())
+			OriginsConfigs.COMMON_SPECS.save();
 	}
 
 	@SubscribeEvent
@@ -214,12 +218,12 @@ public class OriginsEventHandler {
 	public static void onOriginLoad(DynamicRegistrationEvent<Origin> event) {
 		if (event.getOriginal().isSpecial()) //Nothing done on special origins
 			return;
-		if (!OriginsConfigs.SERVER.isOriginEnabled(event.getRegistryName()))
+		if (!OriginsConfigs.COMMON.isOriginEnabled(event.getRegistryName()))
 			event.withCancellationReason("Disabled by config").setCanceled(true);
 		else {
 			Origin original = event.getOriginal();
 			HashSet<ResourceLocation> powers = new HashSet<>(original.getPowers());
-			powers.removeIf(x -> !OriginsConfigs.SERVER.isPowerEnabled(event.getRegistryName(), x));
+			powers.removeIf(x -> !OriginsConfigs.COMMON.isPowerEnabled(event.getRegistryName(), x));
 			if (powers.size() != original.getPowers().size()) {
 				Origins.LOGGER.info("Powers [{}] were disabled by config for origin: {}", original.getPowers().stream()
 								.filter(x -> !powers.contains(x))

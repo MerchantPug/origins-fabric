@@ -77,15 +77,15 @@ public class Origins {
 	public static class ServerConfig {
 
 		public boolean isOriginDisabled(ResourceLocation originId) {
-			return !OriginsConfigs.SERVER.isOriginEnabled(originId);
+			return !OriginsConfigs.COMMON.isOriginEnabled(originId);
 		}
 
 		public boolean isPowerDisabled(ResourceLocation originId, ResourceLocation powerId) {
-			return !OriginsConfigs.SERVER.isPowerEnabled(originId, powerId);
+			return !OriginsConfigs.COMMON.isPowerEnabled(originId, powerId);
 		}
 
 		public boolean addToConfig(Origin origin) {
-			return OriginsConfigs.SERVER.updateOriginList(ImmutableList.of(origin.getWrapped()));
+			return OriginsConfigs.COMMON.updateOriginList(ImmutableList.of(origin.getWrapped()));
 		}
 	}
 }
