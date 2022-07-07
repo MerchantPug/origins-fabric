@@ -6,7 +6,8 @@ import io.github.edwinmindcraft.origins.api.capabilities.IOriginContainer;
 import io.github.edwinmindcraft.origins.api.origin.OriginLayer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.network.chat.TextComponent;
+import net.minecraft.core.Holder;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.common.util.LazyOptional;
 import org.jetbrains.annotations.NotNull;
@@ -16,19 +17,19 @@ import java.util.Objects;
 
 public class WaitForNextLayerScreen extends Screen {
 
-	private final List<OriginLayer> layerList;
+	private final List<Holder<OriginLayer>> layerList;
 	private final int currentLayerIndex;
 	private final boolean showDirtBackground;
 	private final int maxSelection;
 
-	protected WaitForNextLayerScreen(List<OriginLayer> layerList, int currentLayerIndex, boolean showDirtBackground) {
-		super(TextComponent.EMPTY);
+	protected WaitForNextLayerScreen(List<Holder<OriginLayer>> layerList, int currentLayerIndex, boolean showDirtBackground) {
+		super(Component.empty());
 		this.layerList = ImmutableList.copyOf(layerList);
 		this.currentLayerIndex = currentLayerIndex;
 		this.showDirtBackground = showDirtBackground;
 		Player player = Minecraft.getInstance().player;
-		OriginLayer currentLayer = layerList.get(currentLayerIndex);
-		this.maxSelection = currentLayer.getOriginOptionCount(Objects.requireNonNull(player));
+		Holder<OriginLayer> currentLayer = layerList.get(currentLayerIndex);
+		this.maxSelection = currentLayer.value().getOriginOptionCount(Objects.requireNonNull(player));
 	}
 
 	public void openSelection() {
@@ -41,7 +42,7 @@ public class WaitForNextLayerScreen extends Screen {
 		}
 		IOriginContainer component = iOriginContainerLazyOptional.orElseThrow(RuntimeException::new);
 		while (index < this.layerList.size()) {
-			if (!component.hasOrigin(this.layerList.get(index)) && this.layerList.get(index).origins(Objects.requireNonNull(player)).size() > 0) {
+			if (!component.hasOrigin(this.layerList.get(index)) && this.layerList.get(index).value().origins(Objects.requireNonNull(player)).size() > 0) {
 				Minecraft.getInstance().setScreen(new ChooseOriginScreen(this.layerList, index, this.showDirtBackground));
 				return;
 			}

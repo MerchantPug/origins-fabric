@@ -1,16 +1,14 @@
 package io.github.apace100.origins.badge;
 
-import io.github.apace100.apoli.power.PowerType;
 import io.github.apace100.calio.data.SerializableData;
 import io.github.apace100.origins.util.PowerKeyManager;
+import io.github.edwinmindcraft.apoli.api.ApoliAPI;
 import io.github.edwinmindcraft.apoli.api.power.configuration.ConfiguredPower;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTextTooltip;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TextComponent;
-import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraftforge.api.distmarker.Dist;
@@ -46,10 +44,10 @@ public record KeybindBadge(ResourceLocation spriteId, String text) implements Ba
 	public List<ClientTooltipComponent> getTooltipComponents(ConfiguredPower<?, ?> powerType, int widthLimit, float time, Font textRenderer) {
 		List<ClientTooltipComponent> tooltips = new LinkedList<>();
 		Component keyText;
-		keyText = new TextComponent("[")
-				.append(KeyMapping.createNameSupplier(PowerKeyManager.getKeyIdentifier(powerType.getRegistryName())).get())
-				.append(new TextComponent("]"));
-		addLines(tooltips, new TranslatableComponent(this.text, keyText), textRenderer, widthLimit);
+		keyText = Component.literal("[")
+				.append(KeyMapping.createNameSupplier(PowerKeyManager.getKeyIdentifier(ApoliAPI.getPowers().getKey(powerType))).get())
+				.append(Component.literal("]"));
+		addLines(tooltips, Component.translatable(this.text, keyText), textRenderer, widthLimit);
 		return tooltips;
 	}
 

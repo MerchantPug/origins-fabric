@@ -4,13 +4,12 @@ import com.mojang.serialization.Codec;
 import io.github.apace100.calio.data.SerializableData;
 import io.github.apace100.calio.registry.DataObjectFactory;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.registries.ForgeRegistryEntry;
 
 import java.util.Objects;
 import java.util.function.Function;
 
 //FORGE: Properly back factories with a forge registry.
-public final class BadgeFactory extends ForgeRegistryEntry<BadgeFactory> implements DataObjectFactory<Badge> {
+public final class BadgeFactory implements DataObjectFactory<Badge> {
 	private final ResourceLocation id;
 	private final SerializableData data;
 	private final Function<SerializableData.Instance, Badge> factory;

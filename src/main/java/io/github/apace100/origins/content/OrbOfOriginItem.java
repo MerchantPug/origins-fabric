@@ -6,12 +6,13 @@ import io.github.edwinmindcraft.origins.api.origin.Origin;
 import io.github.edwinmindcraft.origins.api.origin.OriginLayer;
 import io.github.edwinmindcraft.origins.common.OriginsCommon;
 import io.github.edwinmindcraft.origins.common.network.S2COpenOriginScreen;
+import io.github.edwinmindcraft.origins.common.registry.OriginRegisters;
 import net.minecraft.ChatFormatting;
+import net.minecraft.core.Holder;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
@@ -46,8 +47,8 @@ public class OrbOfOriginItem extends Item {
 						container.setOrigin(target.getKey(), target.getValue());
 					}
 				} else {
-					for (OriginLayer layer : OriginsAPI.getActiveLayers()) {
-						container.setOrigin(layer, Origin.EMPTY);
+					for (Holder.Reference<OriginLayer> layer : OriginsAPI.getActiveLayers()) {
+						container.setOrigin(layer.key(), Objects.requireNonNull(OriginRegisters.EMPTY.getKey()));
 					}
 				}
 				if (player instanceof ServerPlayer sp) {
@@ -70,9 +71,9 @@ public class OrbOfOriginItem extends Item {
 		Map<OriginLayer, Origin> targets = this.getTargets(stack);
 		for (Map.Entry<OriginLayer, Origin> entry : targets.entrySet()) {
 			if (entry.getValue() == Origin.EMPTY)
-				components.add(new TranslatableComponent("item.origins.orb_of_origin.layer_generic", entry.getKey().name()).withStyle(ChatFormatting.GRAY));
+				components.add(Component.translatable("item.origins.orb_of_origin.layer_generic", entry.getKey().name()).withStyle(ChatFormatting.GRAY));
 			else
-				components.add(new TranslatableComponent("item.origins.orb_of_origin.layer_specific", entry.getKey().name(), entry.getValue().getName()).withStyle(ChatFormatting.GRAY));
+				components.add(Component.translatable("item.origins.orb_of_origin.layer_specific", entry.getKey().name(), entry.getValue().getName()).withStyle(ChatFormatting.GRAY));
 		}
 	}
 
@@ -91,13 +92,14 @@ public class OrbOfOriginItem extends Item {
 					OriginLayer layer = OriginsAPI.getLayersRegistry().get(id);
 					if (layer == null) continue;
 					Origin origin = Origin.EMPTY;
+					ResourceLocation originId = null;
 					if (targetNbt.contains("Origin", Tag.TAG_STRING)) {
-						ResourceLocation originId = new ResourceLocation(targetNbt.getString("Origin"));
+						originId = new ResourceLocation(targetNbt.getString("Origin"));
 						origin = OriginsAPI.getOriginsRegistry().get(originId);
 					}
-					if (origin == null || origin.getRegistryName() == null)
+					if (origin == null || originId == null)
 						continue;
-					if (layer.enabled() && (layer.contains(origin.getRegistryName()) || origin.isSpecial())) {
+					if (layer.enabled() && (layer.contains(originId) || origin.isSpecial())) {
 						targets.put(layer, origin);
 					}
 				} catch (Exception e) {

@@ -2,11 +2,15 @@ package io.github.edwinmindcraft.origins.api.data;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.gson.*;
+import io.github.edwinmindcraft.origins.api.OriginsAPI;
 import io.github.edwinmindcraft.origins.api.origin.ConditionedOrigin;
 import io.github.edwinmindcraft.origins.api.origin.GuiTitle;
 import io.github.edwinmindcraft.origins.api.origin.OriginLayer;
+import io.github.edwinmindcraft.origins.api.registry.OriginsDynamicRegistries;
 import io.github.edwinmindcraft.origins.api.util.JsonUtils;
-import net.minecraft.network.chat.TranslatableComponent;
+import io.github.edwinmindcraft.origins.common.registry.OriginRegisters;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.GsonHelper;
 import org.jetbrains.annotations.Contract;
@@ -14,10 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public record PartialLayer(@Nullable Integer order,
 						   @NotNull Set<ConditionedOrigin> origins,
@@ -64,16 +65,15 @@ public record PartialLayer(@Nullable Integer order,
 	public OriginLayer create(ResourceLocation registryName) {
 		return new OriginLayer(
 				this.order() != null ? this.order() : 0,
-				registryName,
 				ImmutableSet.copyOf(this.origins()),
 				this.enabled() != null ? this.enabled() : true,
-				new TranslatableComponent(this.name() != null ? this.name() : "layer.%s.%s.name".formatted(registryName.getNamespace(), registryName.getPath())),
-				new TranslatableComponent(this.missingName() != null ? this.missingName() : "layer.%s.%s.missing_origin.name".formatted(registryName.getNamespace(), registryName.getPath())),
-				new TranslatableComponent(this.missingDescription() != null ? this.missingDescription() : "layer.%s.%s.missing_origin.description".formatted(registryName.getNamespace(), registryName.getPath())),
+				Component.translatable(this.name() != null ? this.name() : "layer.%s.%s.name".formatted(registryName.getNamespace(), registryName.getPath())),
+				Component.translatable(this.missingName() != null ? this.missingName() : "layer.%s.%s.missing_origin.name".formatted(registryName.getNamespace(), registryName.getPath())),
+				Component.translatable(this.missingDescription() != null ? this.missingDescription() : "layer.%s.%s.missing_origin.description".formatted(registryName.getNamespace(), registryName.getPath())),
 				this.allowRandom() != null ? this.allowRandom() : false,
 				this.allowRandomUnchoosable() != null ? this.allowRandomUnchoosable() : false,
 				ImmutableSet.copyOf(this.excludeRandom()),
-				this.defaultOrigin(),
+				OriginsAPI.getOriginsRegistry().getOrCreateHolderOrThrow(this.defaultOrigin() == null ? Objects.requireNonNull(OriginRegisters.EMPTY.getKey()) : ResourceKey.create(OriginsDynamicRegistries.ORIGINS_REGISTRY, this.defaultOrigin())),
 				this.autoChoose() != null ? this.autoChoose() : false,
 				this.hidden() != null ? this.hidden() : false,
 				this.title() != null ? this.title().create(registryName) : GuiTitle.DEFAULT

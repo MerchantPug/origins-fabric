@@ -9,6 +9,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.material.Fluid;
+import net.minecraftforge.common.ForgeMod;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -40,7 +41,7 @@ public final class WaterBreathingMixin {
 
 		@Redirect(at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/player/Player;isEyeInFluid(Lnet/minecraft/tags/TagKey;)Z"), method = "turtleHelmetTick")
 		public boolean isSubmergedInProxy(Player player, TagKey<Fluid> fluidTag) {
-			boolean submerged = this.isEyeInFluid(fluidTag);
+			boolean submerged = this.isEyeInFluidType(ForgeMod.WATER_TYPE.get());
 			return IPowerContainer.hasPower(this, OriginsPowerTypes.WATER_BREATHING.get()) != submerged;
 		}
 	}

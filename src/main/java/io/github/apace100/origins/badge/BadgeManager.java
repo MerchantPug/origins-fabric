@@ -8,7 +8,6 @@ import com.google.gson.JsonElement;
 import io.github.apace100.apoli.integration.PowerLoadEvent;
 import io.github.apace100.calio.registry.DataObjectRegistry;
 import io.github.apace100.origins.Origins;
-import io.github.apace100.origins.util.PowerKeyManager;
 import io.github.edwinmindcraft.apoli.api.ApoliAPI;
 import io.github.edwinmindcraft.apoli.api.configuration.FieldConfiguration;
 import io.github.edwinmindcraft.apoli.api.power.IActivePower;
@@ -21,11 +20,8 @@ import io.github.edwinmindcraft.origins.api.event.AutoBadgeEvent;
 import io.github.edwinmindcraft.origins.api.registry.OriginsBuiltinRegistries;
 import io.github.edwinmindcraft.origins.common.OriginsCommon;
 import io.github.edwinmindcraft.origins.common.network.S2CSynchronizeBadges;
-import net.minecraft.client.KeyMapping;
 import net.minecraft.core.Holder;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TextComponent;
-import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.inventory.CraftingContainer;
@@ -169,7 +165,7 @@ public final class BadgeManager {
 			Recipe<CraftingContainer> recipe = config.value();
 			String type = recipe instanceof ShapedRecipe ? "shaped" : "shapeless";
 			event.getBadges().add(new CraftingRecipeBadge(RECIPE_BADGE_SPRITE, recipe,
-					new TranslatableComponent("origins.gui.badge.recipe.crafting." + type), null
+					Component.translatable("origins.gui.badge.recipe.crafting." + type), null
 			));
 		}
 	}

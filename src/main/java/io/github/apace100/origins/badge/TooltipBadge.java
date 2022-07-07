@@ -1,6 +1,5 @@
 package io.github.apace100.origins.badge;
 
-import io.github.apace100.apoli.power.PowerType;
 import io.github.apace100.calio.data.SerializableData;
 import io.github.edwinmindcraft.apoli.api.power.configuration.ConfiguredPower;
 import net.minecraft.client.gui.Font;

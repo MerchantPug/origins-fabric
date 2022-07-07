@@ -24,8 +24,6 @@ public class OriginsClient {
 	public static KeyMapping useSecondaryActivePowerKeybind;
 	public static KeyMapping viewCurrentOriginKeybind;
 
-	public static boolean isServerRunningOrigins = false;
-
 	public static void initialize() {
 
 		usePrimaryActivePowerKeybind = new KeyMapping("key.origins.primary_active", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_G, "category." + Origins.MODID);

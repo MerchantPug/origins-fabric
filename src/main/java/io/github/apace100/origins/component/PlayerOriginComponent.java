@@ -9,6 +9,7 @@ import java.util.HashMap;
 
 
 @SuppressWarnings("deprecation")
+@Deprecated
 public class PlayerOriginComponent implements OriginComponent {
 
 	private final IOriginContainer wrapped;
@@ -19,33 +20,39 @@ public class PlayerOriginComponent implements OriginComponent {
 	}
 
 	@Override
+	@Deprecated
 	public boolean hasAllOrigins() {
 		return this.wrapped.hasAllOrigins();
 	}
 
 	@Override
+	@Deprecated
 	public HashMap<OriginLayer, Origin> getOrigins() {
 		this.origins.clear();
-		this.wrapped.getOrigins().forEach((x, y) -> this.origins.put(OriginLayers.get(x), OriginRegistry.get(y)));
+		this.wrapped.getOrigins().forEach((x, y) -> this.origins.put(OriginLayers.getLayer(x.location()), OriginRegistry.get(y.location())));
 		return this.origins;
 	}
 
 	@Override
+	@Deprecated
 	public boolean hasOrigin(OriginLayer layer) {
 		return this.wrapped.hasOrigin(layer.getWrapped());
 	}
 
 	@Override
+	@Deprecated
 	public Origin getOrigin(OriginLayer layer) {
-		return OriginRegistry.get(this.wrapped.getOrigin(layer.getWrapped()));
+		return OriginRegistry.get(this.wrapped.getOrigin(layer.getWrapped()).location());
 	}
 
 	@Override
+	@Deprecated
 	public boolean hadOriginBefore() {
 		return this.wrapped.hasAllOrigins();
 	}
 
 	@Override
+	@Deprecated
 	public void setOrigin(OriginLayer layer, Origin origin) {
 		this.wrapped.setOrigin(layer.getWrapped(), origin.getWrapped());
 	}
@@ -175,6 +182,7 @@ public class PlayerOriginComponent implements OriginComponent {
     }*/
 
     @Override
+	@Deprecated
     public void sync() {
         OriginComponent.sync(this.wrapped.getOwner());
     }

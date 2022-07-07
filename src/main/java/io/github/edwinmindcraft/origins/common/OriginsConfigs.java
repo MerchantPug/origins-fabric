@@ -2,7 +2,10 @@ package io.github.edwinmindcraft.origins.common;
 
 import com.electronwill.nightconfig.core.Config;
 import com.google.common.collect.ImmutableList;
+import io.github.edwinmindcraft.calio.api.registry.ICalioDynamicRegistryManager;
 import io.github.edwinmindcraft.origins.api.origin.Origin;
+import io.github.edwinmindcraft.origins.api.registry.OriginsDynamicRegistries;
+import net.minecraft.core.WritableRegistry;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.common.ForgeConfigSpec;
 import org.apache.commons.lang3.tuple.Pair;
@@ -33,10 +36,11 @@ public class OriginsConfigs {
 			return this.origins.get().getOrElse(ImmutableList.of(origin.toString(), power.toString()), true);
 		}
 
-		public boolean updateOriginList(Iterable<Origin> origins) {
+		public boolean updateOriginList(ICalioDynamicRegistryManager registryManager, Iterable<Origin> origins) {
 			boolean changed = false;
+			WritableRegistry<Origin> registry = registryManager.get(OriginsDynamicRegistries.ORIGINS_REGISTRY);
 			for (Origin origin : origins) {
-				ResourceLocation registryName = origin.getRegistryName();
+				ResourceLocation registryName = registry.getKey(origin);
 				if (origin.isSpecial() || registryName == null) //Ignore special origins
 					continue;
 				if (this.origins.get().add(ImmutableList.of(registryName.toString(), "enabled"), true))

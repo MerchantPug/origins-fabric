@@ -2,7 +2,7 @@ package io.github.edwinmindcraft.origins.api.data;
 
 import com.google.gson.*;
 import io.github.edwinmindcraft.origins.api.origin.GuiTitle;
-import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.GsonHelper;
 import org.jetbrains.annotations.Contract;
@@ -17,8 +17,8 @@ public record PartialGuiTitle(@Nullable String view,
 	@NotNull
 	public GuiTitle create(@NotNull ResourceLocation identifier) {
 		return new GuiTitle(
-				this.view() != null ? new TranslatableComponent(!this.view().isEmpty() ? this.view() : "layer.%s.%s.view_origin.name".formatted(identifier.getNamespace(), identifier.getPath())) : null,
-				this.choose() != null ? new TranslatableComponent(!this.choose().isEmpty() ? this.choose() : "layer.%s.%s.choose_origin.name".formatted(identifier.getNamespace(), identifier.getPath())) : null
+				this.view() != null ? Component.translatable(!this.view().isEmpty() ? this.view() : "layer.%s.%s.view_origin.name".formatted(identifier.getNamespace(), identifier.getPath())) : null,
+				this.choose() != null ? Component.translatable(!this.choose().isEmpty() ? this.choose() : "layer.%s.%s.choose_origin.name".formatted(identifier.getNamespace(), identifier.getPath())) : null
 		);
 	}
 

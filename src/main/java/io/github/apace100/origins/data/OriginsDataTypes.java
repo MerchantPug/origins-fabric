@@ -10,7 +10,9 @@ public final class OriginsDataTypes {
 
     public static final SerializableDataType<Impact> IMPACT = SerializableDataType.enumValue(Impact.class);
 
+    @Deprecated
     public static final SerializableDataType<OriginUpgrade> UPGRADE = new SerializableDataType<>(OriginUpgrade.class, OriginUpgrade.CODEC);
 
+    @Deprecated
     public static final SerializableDataType<List<OriginUpgrade>> UPGRADES = SerializableDataType.list(UPGRADE);
 }

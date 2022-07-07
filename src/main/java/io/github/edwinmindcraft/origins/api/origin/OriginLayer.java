@@ -3,26 +3,28 @@ package io.github.edwinmindcraft.origins.api.origin;
 import com.google.common.collect.ImmutableSet;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import io.github.apace100.calio.data.SerializableDataTypes;
 import io.github.edwinmindcraft.apoli.api.power.configuration.ConfiguredEntityCondition;
 import io.github.edwinmindcraft.calio.api.network.CalioCodecHelper;
+import io.github.edwinmindcraft.calio.api.network.CodecSet;
 import io.github.edwinmindcraft.calio.api.registry.ICalioDynamicRegistryManager;
-import io.github.edwinmindcraft.origins.api.OriginsAPI;
 import io.github.edwinmindcraft.origins.api.registry.OriginsDynamicRegistries;
+import io.github.edwinmindcraft.origins.common.registry.OriginRegisters;
+import net.minecraft.core.Holder;
+import net.minecraft.core.HolderSet;
 import net.minecraft.core.Registry;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
-import net.minecraftforge.registries.ForgeRegistryEntry;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public final class OriginLayer extends ForgeRegistryEntry.UncheckedRegistryEntry<OriginLayer> implements Comparable<OriginLayer> {
+public final class OriginLayer implements Comparable<OriginLayer> {
 
 	public static final Codec<OriginLayer> CODEC = RecordCodecBuilder.create(instance -> instance.group(
 			CalioCodecHelper.INT.fieldOf("order").forGetter(OriginLayer::order),
@@ -34,11 +36,14 @@ public final class OriginLayer extends ForgeRegistryEntry.UncheckedRegistryEntry
 			CalioCodecHelper.BOOL.fieldOf("allow_random").forGetter(OriginLayer::allowRandom),
 			CalioCodecHelper.BOOL.fieldOf("allow_random_unchoosable").forGetter(OriginLayer::allowRandomUnchoosable),
 			CalioCodecHelper.setOf(ResourceLocation.CODEC).fieldOf("random_exclusions").forGetter(OriginLayer::randomExclusions),
-			CalioCodecHelper.optionalField(ResourceLocation.CODEC, "default").forGetter(x -> Optional.ofNullable(x.defaultOrigin())),
+			Origin.optional("default").forGetter(OriginLayer::defaultOrigin),
 			CalioCodecHelper.BOOL.fieldOf("auto_choose").forGetter(OriginLayer::autoChoose),
 			CalioCodecHelper.optionalField(CalioCodecHelper.BOOL, "hidden", false).forGetter(OriginLayer::hidden),
 			CalioCodecHelper.optionalField(GuiTitle.CODEC, "gui_title", GuiTitle.DEFAULT).forGetter(OriginLayer::title)
 	).apply(instance, OriginLayer::new));
+
+	public static final CodecSet<OriginLayer> CODEC_SET = CalioCodecHelper.forDynamicRegistry(OriginsDynamicRegistries.LAYERS_REGISTRY, SerializableDataTypes.IDENTIFIER, CODEC);
+	public static final Codec<Holder<OriginLayer>> HOLDER_CODEC = CODEC_SET.holderRef();
 
 	private final int order;
 	private final Set<ConditionedOrigin> conditionedOrigins;
@@ -49,24 +54,10 @@ public final class OriginLayer extends ForgeRegistryEntry.UncheckedRegistryEntry
 	private final boolean allowRandom;
 	private final boolean allowRandomUnchoosable;
 	private final Set<ResourceLocation> randomExclusions;
-	private final @Nullable ResourceLocation defaultOrigin;
+	private final Holder<Origin> defaultOrigin;
 	private final boolean autoChoose;
 	private final boolean hidden;
 	private final GuiTitle title;
-
-	public OriginLayer(int order, ResourceLocation registryName,
-					   Set<ConditionedOrigin> conditionedOrigins,
-					   boolean enabled, Component name,
-					   Component missingName,
-					   Component missingDescription, boolean allowRandom,
-					   boolean allowRandomUnchoosable,
-					   Set<ResourceLocation> randomExclusions,
-					   @Nullable ResourceLocation defaultOrigin,
-					   boolean autoChoose, boolean hidden,
-					   GuiTitle title) {
-		this(order, conditionedOrigins, enabled, name, missingName, missingDescription, allowRandom, allowRandomUnchoosable, randomExclusions, defaultOrigin, autoChoose, hidden, title);
-		this.setRegistryName(registryName);
-	}
 
 	public OriginLayer(int order,
 					   Set<ConditionedOrigin> conditionedOrigins,
@@ -75,7 +66,7 @@ public final class OriginLayer extends ForgeRegistryEntry.UncheckedRegistryEntry
 					   Component missingDescription, boolean allowRandom,
 					   boolean allowRandomUnchoosable,
 					   Set<ResourceLocation> randomExclusions,
-					   @Nullable ResourceLocation defaultOrigin,
+					   Holder<Origin> defaultOrigin,
 					   boolean autoChoose, boolean hidden,
 					   GuiTitle title) {
 		this.order = order;
@@ -91,14 +82,6 @@ public final class OriginLayer extends ForgeRegistryEntry.UncheckedRegistryEntry
 		this.autoChoose = autoChoose;
 		this.hidden = hidden;
 		this.title = title;
-	}
-
-	@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-	private OriginLayer(Integer order, Set<ConditionedOrigin> conditionedOrigins,
-						Boolean enabled, Component name, Component missingName, Component missingDescription,
-						Boolean allowRandom, Boolean allowRandomUnchoosable, Set<ResourceLocation> randomExclusions,
-						Optional<ResourceLocation> defaultOrigin, Boolean autoChoose, Boolean hidden, GuiTitle title) {
-		this(order, conditionedOrigins, enabled, name, missingName, missingDescription, allowRandom, allowRandomUnchoosable, randomExclusions, defaultOrigin.orElse(null), autoChoose, hidden, title);
 	}
 
 	public OriginLayer cleanup(ICalioDynamicRegistryManager registries) {
@@ -117,14 +100,14 @@ public final class OriginLayer extends ForgeRegistryEntry.UncheckedRegistryEntry
 	}
 
 	public boolean hasDefaultOrigin() {
-		return this.defaultOrigin() != null;
+		return !this.defaultOrigin().is(OriginRegisters.EMPTY.getId());
 	}
 
-	public Set<ResourceLocation> origins() {
+	public Set<Holder<Origin>> origins() {
 		return this.conditionedOrigins().stream().flatMap(ConditionedOrigin::stream).collect(Collectors.toSet());
 	}
 
-	public Set<ResourceLocation> origins(Player player) {
+	public Set<Holder<Origin>> origins(Player player) {
 		return this.conditionedOrigins().stream().flatMap(x -> x.stream(player)).collect(Collectors.toSet());
 	}
 
@@ -136,32 +119,26 @@ public final class OriginLayer extends ForgeRegistryEntry.UncheckedRegistryEntry
 		return this.conditionedOrigins().stream().flatMap(x -> x.stream(player)).findAny().isEmpty();
 	}
 
-	public List<ResourceLocation> randomOrigins(Player player) {
-		Registry<Origin> origins = OriginsAPI.getOriginsRegistry();
+	public List<Holder<Origin>> randomOrigins(Player player) {
 		return this.conditionedOrigins().stream().flatMap(x -> x.stream(player))
-				.filter(o -> !this.randomExclusions().contains(o))
-				.filter(id -> origins.getOptional(id).map(x -> this.allowRandomUnchoosable() || x.isChoosable()).orElse(false))
+				.filter(o -> !this.randomExclusions().contains(o.unwrapKey().orElseThrow().location()))
+				.filter(id -> this.allowRandomUnchoosable() || id.value().isChoosable())
 				.collect(Collectors.toList());
 	}
-
 	public boolean contains(ResourceLocation origin) {
-		return this.conditionedOrigins().stream().anyMatch(x -> x.origins().contains(origin));
+		return this.conditionedOrigins().stream().anyMatch(x -> x.origins().stream().flatMap(HolderSet::stream).anyMatch(holder -> holder.is(origin)));
+	}
+
+	public boolean contains(ResourceKey<Origin> origin) {
+		return this.conditionedOrigins().stream().anyMatch(x -> x.origins().stream().flatMap(HolderSet::stream).anyMatch(holder -> holder.is(origin)));
 	}
 
 	public boolean contains(ResourceLocation origin, Player player) {
-		return this.conditionedOrigins().stream().anyMatch(x -> ConfiguredEntityCondition.check(x.condition(), player) && x.origins().contains(origin));
+		return this.conditionedOrigins().stream().anyMatch(x -> ConfiguredEntityCondition.check(x.condition(), player) && x.origins().stream().flatMap(HolderSet::stream).anyMatch(holder -> holder.is(origin)));
 	}
 
-	@Override
-	public boolean equals(Object obj) {
-		if (!(obj instanceof OriginLayer layer))
-			return false;
-		return Objects.equals(this.getRegistryName(), layer.getRegistryName());
-	}
-
-	@Override
-	public int hashCode() {
-		return Objects.hash(this.getRegistryName());
+	public boolean contains(ResourceKey<Origin> origin, Player player) {
+		return this.conditionedOrigins().stream().anyMatch(x -> ConfiguredEntityCondition.check(x.condition(), player) && x.origins().stream().flatMap(HolderSet::stream).anyMatch(holder -> holder.is(origin)));
 	}
 
 	/**
@@ -173,11 +150,10 @@ public final class OriginLayer extends ForgeRegistryEntry.UncheckedRegistryEntry
 	 * @return Either an optional containing {@link ResourceLocation} of the origin if applicable, or {@link Optional#empty()}.
 	 */
 	@NotNull
-	public Optional<Origin> getAutomaticOrigin(Player player) {
+	public Optional<Holder<Origin>> getAutomaticOrigin(Player player) {
 		if (!this.autoChoose())
 			return Optional.empty();
-		Registry<Origin> registry = OriginsAPI.getOriginsRegistry();
-		List<Origin> origins = this.origins(player).stream().flatMap(x -> registry.getOptional(x).stream().filter(Origin::isChoosable)).toList();
+		List<Holder<Origin>> origins = this.origins(player).stream().filter(x -> x.value().isChoosable()).toList();
 		if (this.allowRandom() && origins.isEmpty())
 			return this.selectRandom(player);
 		if (origins.size() > 1)
@@ -185,14 +161,12 @@ public final class OriginLayer extends ForgeRegistryEntry.UncheckedRegistryEntry
 		return origins.stream().findFirst();
 	}
 
-	public Optional<Origin> selectRandom(Player player) {
+	public Optional<Holder<Origin>> selectRandom(Player player) {
 		if (!this.allowRandom())
 			return Optional.empty();
-		Registry<Origin> origins = OriginsAPI.getOriginsRegistry();
-		List<Origin> candidates = this.conditionedOrigins.stream()
+		List<Holder<Origin>> candidates = this.conditionedOrigins.stream()
 				.flatMap(x -> x.stream(player))
-				.flatMap(x -> origins.getOptional(x).stream())
-				.filter(x -> this.allowRandomUnchoosable() || x.isChoosable()).toList();
+				.filter(x -> this.allowRandomUnchoosable() || x.value().isChoosable()).toList();
 		if (candidates.isEmpty())
 			return Optional.empty();
 		if (candidates.size() == 1)
@@ -201,8 +175,7 @@ public final class OriginLayer extends ForgeRegistryEntry.UncheckedRegistryEntry
 	}
 
 	public int getOriginOptionCount(Player playerEntity) {
-		Registry<Origin> origins = OriginsAPI.getOriginsRegistry();
-		long choosableOrigins = this.origins(playerEntity).stream().flatMap(x -> origins.getOptional(x).stream()).filter(Origin::isChoosable).count();
+		long choosableOrigins = this.origins(playerEntity).stream().filter(x -> x.value().isChoosable()).count();
 		if (this.allowRandom() && this.randomOrigins(playerEntity).size() > 0)
 			choosableOrigins++;
 		return Math.toIntExact(choosableOrigins);
@@ -214,15 +187,6 @@ public final class OriginLayer extends ForgeRegistryEntry.UncheckedRegistryEntry
 	}
 
 	public int order() {return this.order;}
-
-	/**
-	 * @deprecated Use {@link #getRegistryName()} instead.
-	 */
-	@Nullable
-	@Deprecated(forRemoval = true, since = "2.3.3.1")
-	public ResourceLocation registryName() {
-		return this.getRegistryName();
-	}
 
 	public Set<ConditionedOrigin> conditionedOrigins() {return this.conditionedOrigins;}
 
@@ -240,7 +204,7 @@ public final class OriginLayer extends ForgeRegistryEntry.UncheckedRegistryEntry
 
 	public Set<ResourceLocation> randomExclusions() {return this.randomExclusions;}
 
-	public @Nullable ResourceLocation defaultOrigin() {return this.defaultOrigin;}
+	public @NotNull Holder<Origin> defaultOrigin() {return this.defaultOrigin;}
 
 	public boolean autoChoose() {return this.autoChoose;}
 

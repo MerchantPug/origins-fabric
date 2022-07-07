@@ -29,7 +29,7 @@ public enum LayerLoader implements DynamicEntryValidator<OriginLayer>, DynamicEn
 			.create();
 
 	@Override
-	public OriginLayer accept(@NotNull ResourceLocation resourceLocation, List<JsonElement> list) {
+	public OriginLayer accept(@NotNull ResourceLocation resourceLocation, @NotNull List<JsonElement> list) {
 		Optional<PartialLayer> reduce = list.stream().flatMap(x -> {
 			try {
 				return Stream.of(GSON.fromJson(x, PartialLayer.class));

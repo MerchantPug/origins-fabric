@@ -2,11 +2,13 @@ package io.github.apace100.origins.origin;
 
 import io.github.apace100.apoli.power.PowerType;
 import io.github.apace100.origins.component.OriginComponent;
+import io.github.edwinmindcraft.origins.api.OriginsAPI;
 import io.github.edwinmindcraft.origins.api.capabilities.IOriginContainer;
 import io.github.edwinmindcraft.origins.common.registry.OriginRegisters;
 import net.minecraft.advancements.Advancement;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
@@ -39,9 +41,11 @@ public class Origin {
 		EMPTY = new Origin(OriginRegisters.EMPTY);
 	}
 
+	@Deprecated
 	public static void init() {}
 
 
+	@Deprecated
 	public static Map<OriginLayer, Origin> get(Entity entity) {
 		if (entity instanceof Player) {
 			return get((Player) entity);
@@ -49,6 +53,7 @@ public class Origin {
 		return new HashMap<>();
 	}
 
+	@Deprecated
 	public static Map<OriginLayer, Origin> get(Player player) {
 		return IOriginContainer.get(player).map(IOriginContainer::asLegacyComponent).map(OriginComponent::getOrigins).orElseGet(HashMap::new);
 	}
@@ -63,16 +68,19 @@ public class Origin {
 		return this.wrapped.get();
 	}
 
+	@Deprecated
 	public boolean hasUpgrade() {
 		return !this.getWrapped().getUpgrades().isEmpty();
 	}
 
+	@Deprecated
 	public Optional<OriginUpgrade> getUpgrade(Advancement advancement) {
 		return this.getWrapped().findUpgrade(advancement.getId()).map(OriginUpgrade::new);
 	}
 
+	@Deprecated
 	public ResourceLocation getIdentifier() {
-		return this.getWrapped().getRegistryName();
+		return OriginsAPI.getOriginsRegistry().getKey(this.getWrapped());
 	}
 
 /*	public boolean hasPowerType(PowerType<?> powerType) {
@@ -92,16 +100,19 @@ public class Origin {
 		return false;
 	}*/
 
-    public void removePowerType(PowerType<?> powerType) {
-        throw new UnsupportedOperationException("Origins are immutable in forge.");
-        //this.powerTypes.remove(powerType);
-    }
+	@Deprecated
+	public void removePowerType(PowerType<?> powerType) {
+		throw new UnsupportedOperationException("Origins are immutable in forge.");
+		//this.powerTypes.remove(powerType);
+	}
 
 
-    public boolean isSpecial() {
+	@Deprecated
+	public boolean isSpecial() {
 		return this.getWrapped().isSpecial();
 	}
 
+	@Deprecated
 	public boolean isChoosable() {
 		return this.getWrapped().isChoosable();
 	}
@@ -110,30 +121,37 @@ public class Origin {
 		return this.powerTypes;
 	}*/
 
+	@Deprecated
 	public Impact getImpact() {
 		return this.getWrapped().getImpact();
 	}
 
+	@Deprecated
 	public ItemStack getDisplayItem() {
 		return this.getWrapped().getIcon();
 	}
 
+	@Deprecated
 	public String getOrCreateNameTranslationKey() {
-		return this.getWrapped().getName() instanceof TranslatableComponent tc ? tc.getKey() : "";
+		return this.getWrapped().getName() instanceof MutableComponent mc && mc.getContents() instanceof TranslatableContents tc ? tc.getKey() : "";
 	}
 
+	@Deprecated
 	public Component getName() {
 		return this.getWrapped().getName();
 	}
 
+	@Deprecated
 	public String getOrCreateDescriptionTranslationKey() {
-		return this.getWrapped().getDescription() instanceof TranslatableComponent tc ? tc.getKey() : "";
+		return this.getWrapped().getDescription() instanceof MutableComponent mc && mc.getContents() instanceof TranslatableContents tc ? tc.getKey() : "";
 	}
 
+	@Deprecated
 	public Component getDescription() {
 		return this.getWrapped().getDescription();
 	}
 
+	@Deprecated
 	public int getOrder() {
 		return this.getWrapped().getOrder();
 	}

@@ -9,7 +9,7 @@ import io.github.apace100.origins.origin.Impact;
 import io.github.edwinmindcraft.origins.api.origin.Origin;
 import io.github.edwinmindcraft.origins.api.origin.OriginUpgrade;
 import io.github.edwinmindcraft.origins.api.util.JsonUtils;
-import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.world.item.ItemStack;
@@ -36,8 +36,8 @@ public record PartialOrigin(@NotNull Set<ResourceLocation> powers,
 				this.unchoosable() != null ? this.unchoosable() : false,
 				this.order() != null ? this.order() : Integer.MAX_VALUE,
 				this.impact() != null ? this.impact() : Impact.NONE,
-				new TranslatableComponent(this.name() != null ? this.name() : "origin." + name.getNamespace() + "." + name.getPath() + ".name"),
-				new TranslatableComponent(this.description() != null ? this.description() : "origin." + name.getNamespace() + "." + name.getPath() + ".description"),
+				Component.translatable(this.name() != null ? this.name() : "origin." + name.getNamespace() + "." + name.getPath() + ".name"),
+				Component.translatable(this.description() != null ? this.description() : "origin." + name.getNamespace() + "." + name.getPath() + ".description"),
 				ImmutableSet.copyOf(this.upgrades()));
 	}
 

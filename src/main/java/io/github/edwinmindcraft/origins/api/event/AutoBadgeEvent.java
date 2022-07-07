@@ -6,7 +6,6 @@ import io.github.edwinmindcraft.apoli.api.power.configuration.ConfiguredPower;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.eventbus.api.Event;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**

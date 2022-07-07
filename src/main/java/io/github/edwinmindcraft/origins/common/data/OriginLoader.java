@@ -12,7 +12,6 @@ import io.github.edwinmindcraft.calio.api.registry.ICalioDynamicRegistryManager;
 import io.github.edwinmindcraft.origins.api.data.PartialOrigin;
 import io.github.edwinmindcraft.origins.api.origin.Origin;
 import io.github.edwinmindcraft.origins.api.origin.OriginUpgrade;
-import io.github.edwinmindcraft.origins.common.OriginsConfigs;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

@@ -1,18 +1,22 @@
 package io.github.edwinmindcraft.origins.common.network;
 
 import io.github.apace100.origins.Origins;
-import io.github.apace100.origins.component.OriginComponent;
 import io.github.edwinmindcraft.origins.api.OriginsAPI;
 import io.github.edwinmindcraft.origins.api.capabilities.IOriginContainer;
 import io.github.edwinmindcraft.origins.api.origin.Origin;
 import io.github.edwinmindcraft.origins.api.origin.OriginLayer;
+import io.github.edwinmindcraft.origins.api.registry.OriginsDynamicRegistries;
 import io.github.edwinmindcraft.origins.common.OriginsCommon;
+import io.github.edwinmindcraft.origins.common.registry.OriginRegisters;
+import net.minecraft.core.Holder;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkEvent;
 import net.minecraftforge.network.PacketDistributor;
 
+import java.util.Optional;
 import java.util.function.Supplier;
 
 public record C2SChooseOrigin(ResourceLocation layer, ResourceLocation origin) {
@@ -31,31 +35,30 @@ public record C2SChooseOrigin(ResourceLocation layer, ResourceLocation origin) {
 			ServerPlayer sender = contextSupplier.get().getSender();
 			if (sender == null) return;
 			IOriginContainer.get(sender).ifPresent(container -> {
-				OriginLayer layer = OriginsAPI.getLayersRegistry().get(this.layer());
-				if (layer == null) {
+				Optional<Holder<OriginLayer>> layer = OriginsAPI.getLayersRegistry().getHolder(ResourceKey.create(OriginsDynamicRegistries.LAYERS_REGISTRY, this.layer())).filter(Holder::isBound);
+				if (layer.isEmpty()) {
 					Origins.LOGGER.warn("Player {} tried to select an origin for missing layer {}", sender.getScoreboardName(), this.layer());
 					return;
 				}
-				if (container.hasAllOrigins() || container.hasOrigin(layer)) {
+				if (container.hasAllOrigins() || container.hasOrigin(layer.get())) {
 					Origins.LOGGER.warn("Player {} tried to choose origin for layer {} while having one already.", sender.getScoreboardName(), this.layer());
 					return;
 				}
-				Origin origin = OriginsAPI.getOriginsRegistry().get(this.origin());
-				if (origin == null) {
+				Optional<Holder<Origin>> origin = OriginsAPI.getOriginsRegistry().getHolder(ResourceKey.create(OriginsDynamicRegistries.ORIGINS_REGISTRY, this.origin())).filter(Holder::isBound);
+				if (origin.isEmpty()) {
 					Origins.LOGGER.warn("Player {} chose unknown origin: {} for layer {}", sender.getScoreboardName(), this.origin(), this.layer());
 					return;
 				}
-				if (!origin.isChoosable() || !layer.contains(this.origin(), sender)) {
+				if (!origin.get().value().isChoosable() || !layer.get().value().contains(this.origin(), sender)) {
 					Origins.LOGGER.warn("Player {} tried to choose invalid origin: {} for layer: {}", sender.getScoreboardName(), this.origin(), this.layer());
-					container.setOrigin(layer, Origin.EMPTY);
+					container.setOrigin(layer.get(), OriginRegisters.EMPTY.getHolder().orElseThrow());
 				} else {
 					boolean hadOriginBefore = container.hadAllOrigins();
 					boolean hadAllOrigins = container.hasAllOrigins();
-					container.setOrigin(layer, origin);
+					container.setOrigin(layer.get(), origin.get());
 					container.checkAutoChoosingLayers(false);
-					if (container.hasAllOrigins() && !hadAllOrigins) {
-						OriginComponent.onChosen(sender, hadOriginBefore);
-					}
+					if (container.hasAllOrigins() && !hadAllOrigins)
+						container.onChosen(hadOriginBefore);
 				}
 				container.synchronize();
 				OriginsCommon.CHANNEL.send(PacketDistributor.PLAYER.with(() -> sender), new S2CConfirmOrigin(this.layer(), this.origin()));

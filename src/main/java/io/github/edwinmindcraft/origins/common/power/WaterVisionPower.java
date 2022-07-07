@@ -12,7 +12,7 @@ public class WaterVisionPower extends PowerFactory<WaterVisionConfiguration> {
 	public static Optional<Float> getWaterVisionStrength(LivingEntity living) {
 		if (!OriginsPowerTypes.WATER_VISION.isPresent())
 			return Optional.empty();
-		return IPowerContainer.getPowers(living, OriginsPowerTypes.WATER_VISION.get()).stream().map(x -> x.getConfiguration().strength()).max(Float::compareTo);
+		return IPowerContainer.getPowers(living, OriginsPowerTypes.WATER_VISION.get()).stream().map(x -> x.value().getConfiguration().strength()).max(Float::compareTo);
 	}
 
 	public WaterVisionPower() {

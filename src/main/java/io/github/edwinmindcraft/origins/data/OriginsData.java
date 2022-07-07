@@ -17,9 +17,7 @@ public class OriginsData {
 	private static void gatherData(GatherDataEvent event) {
 		DataGenerator generator = event.getGenerator();
 		ExistingFileHelper existingFileHelper = event.getExistingFileHelper();
-		if (event.includeServer()) {
-			generator.addProvider(new OriginsBlockTagProvider(generator, existingFileHelper));
-			generator.addProvider(new OriginsPowerProvider(generator, existingFileHelper));
-		}
+		generator.addProvider(event.includeServer(), new OriginsBlockTagProvider(generator, existingFileHelper));
+		generator.addProvider(event.includeServer(), new OriginsPowerProvider(generator, existingFileHelper));
 	}
 }

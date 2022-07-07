@@ -27,16 +27,18 @@ import io.github.edwinmindcraft.origins.common.data.OriginLoader;
 import io.github.edwinmindcraft.origins.common.network.S2COpenOriginScreen;
 import net.minecraft.ChatFormatting;
 import net.minecraft.advancements.Advancement;
+import net.minecraft.core.Holder;
+import net.minecraft.core.Registry;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.tags.FluidTags;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraftforge.common.ForgeMod;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.OnDatapackSyncEvent;
@@ -114,19 +116,23 @@ public class OriginsEventHandler {
 	@SubscribeEvent
 	public static void onAdvancement(AdvancementEvent event) {
 		Advancement advancement = event.getAdvancement();
-		IOriginContainer.get(event.getPlayer()).ifPresent(container -> container.getOrigins().forEach((layer, origin) -> origin.getUpgrades().stream().filter(x -> Objects.equals(x.advancement(), advancement.getId())).findFirst().ifPresent(upgrade -> {
-			try {
-				Origin target = OriginsAPI.getOriginsRegistry().get(upgrade.origin());
-				if (target != null) {
-					container.setOrigin(layer, target);
-					container.synchronize();
-					if (!upgrade.announcement().isBlank())
-						event.getPlayer().displayClientMessage(new TranslatableComponent(upgrade.announcement()).withStyle(ChatFormatting.GOLD), false);
-				}
-			} catch (IllegalArgumentException e) {
-				Origins.LOGGER.error("Could not perform Origins upgrade from {} to {}, as the upgrade origin did not exist!", origin.getRegistryName(), upgrade.origin());
-			}
-		})));
+		Registry<Origin> originsRegistry = OriginsAPI.getOriginsRegistry();
+		IOriginContainer.get(event.getPlayer()).ifPresent(container -> container.getOrigins()
+				.forEach((layer, origin) -> originsRegistry.getHolder(origin).stream().flatMap(x -> x.get().getUpgrades().stream())
+						.filter(x -> Objects.equals(x.advancement(), advancement.getId())).findFirst()
+						.ifPresent(upgrade -> {
+							try {
+								Holder<Origin> target = upgrade.origin();
+								if (target.isBound() && target.unwrapKey().isPresent()) {
+									container.setOrigin(layer, target.unwrapKey().get());
+									container.synchronize();
+									if (!upgrade.announcement().isBlank())
+										event.getPlayer().displayClientMessage(Component.translatable(upgrade.announcement()).withStyle(ChatFormatting.GOLD), false);
+								}
+							} catch (IllegalArgumentException e) {
+								Origins.LOGGER.error("Could not perform Origins upgrade from {} to {}, as the upgrade origin did not exist!", origin.location(), upgrade.origin().unwrapKey().orElse(null));
+							}
+						})));
 	}
 
 	@SubscribeEvent
@@ -138,11 +144,11 @@ public class OriginsEventHandler {
 		if (currentServer != null) {
 			for (ServerPlayer player : currentServer.getPlayerList().getPlayers()) {
 				//Revoke any power that would have been removed from the origin.
-				IOriginContainer.get(player).ifPresent(IOriginContainer::onReload);
+				IOriginContainer.get(player).ifPresent(container -> container.onReload(event.getRegistryManager()));
 			}
 		}
 		//Update specs with currently loaded origins.
-		if (OriginsConfigs.COMMON.updateOriginList(event.getRegistryManager().get(OriginsDynamicRegistries.ORIGINS_REGISTRY))
+		if (OriginsConfigs.COMMON.updateOriginList(event.getRegistryManager(), event.getRegistryManager().get(OriginsDynamicRegistries.ORIGINS_REGISTRY))
 			&& OriginsConfigs.COMMON_SPECS.isLoaded())
 			OriginsConfigs.COMMON_SPECS.save();
 	}
@@ -189,7 +195,7 @@ public class OriginsEventHandler {
 			Player player = event.player;
 			IOriginContainer.get(event.player).ifPresent(IOriginContainer::tick);
 			if (IPowerContainer.hasPower(player, OriginsPowerTypes.WATER_BREATHING.get())) {
-				if (!player.isEyeInFluid(FluidTags.WATER) && !player.hasEffect(MobEffects.WATER_BREATHING) && !player.hasEffect(MobEffects.CONDUIT_POWER)) {
+				if (!player.isEyeInFluidType(ForgeMod.WATER_TYPE.get()) && !player.hasEffect(MobEffects.WATER_BREATHING) && !player.hasEffect(MobEffects.CONDUIT_POWER)) {
 					if (!((EntityAccessor) player).callIsBeingRainedOn()) {
 						int landGain = increaseAirSupply(player, 0);
 						player.setAirSupply(decreaseAirSupply(player, player.getAirSupply()) - landGain);

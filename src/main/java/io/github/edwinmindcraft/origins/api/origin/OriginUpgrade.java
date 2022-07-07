@@ -4,12 +4,13 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.edwinmindcraft.calio.api.network.CalioCodecHelper;
+import net.minecraft.core.Holder;
 import net.minecraft.resources.ResourceLocation;
 
-public record OriginUpgrade(ResourceLocation advancement, ResourceLocation origin, String announcement) {
+public record OriginUpgrade(ResourceLocation advancement, Holder<Origin> origin, String announcement) {
 	public static final MapCodec<OriginUpgrade> MAP_CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
 			ResourceLocation.CODEC.fieldOf("condition").forGetter(OriginUpgrade::advancement),
-			ResourceLocation.CODEC.fieldOf("origin").forGetter(OriginUpgrade::origin),
+			Origin.HOLDER_CODEC.fieldOf("origin").forGetter(OriginUpgrade::origin),
 			CalioCodecHelper.optionalField(Codec.STRING, "announcement", "").forGetter(OriginUpgrade::announcement)
 	).apply(instance, OriginUpgrade::new));
 

@@ -2,6 +2,7 @@ package io.github.apace100.origins.content;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
@@ -13,8 +14,6 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Random;
-
 public class TemporaryCobwebBlock extends WebBlock {
 
 	public TemporaryCobwebBlock(BlockBehaviour.Properties settings) {
@@ -23,7 +22,7 @@ public class TemporaryCobwebBlock extends WebBlock {
 
 	@Override
 	@Deprecated
-	public void tick(@NotNull BlockState state, ServerLevel world, @NotNull BlockPos pos, @NotNull Random random) {
+	public void tick(@NotNull BlockState state, ServerLevel world, @NotNull BlockPos pos, @NotNull RandomSource random) {
 		if (!world.isClientSide)
 			world.setBlockAndUpdate(pos, Blocks.AIR.defaultBlockState());
 	}

@@ -10,17 +10,23 @@ import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import io.github.edwinmindcraft.origins.api.OriginsAPI;
 import io.github.edwinmindcraft.origins.api.origin.Origin;
 import io.github.edwinmindcraft.origins.api.origin.OriginLayer;
+import io.github.edwinmindcraft.origins.api.registry.OriginsBuiltinRegistries;
+import io.github.edwinmindcraft.origins.api.registry.OriginsDynamicRegistries;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.SharedSuggestionProvider;
-import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.core.Holder;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 public class OriginArgumentType implements ArgumentType<ResourceLocation> {
-	public static final DynamicCommandExceptionType ORIGIN_NOT_FOUND = new DynamicCommandExceptionType((p_208663_0_) -> new TranslatableComponent("commands.origin.origin_not_found", p_208663_0_));
+	public static final DynamicCommandExceptionType ORIGIN_NOT_FOUND = new DynamicCommandExceptionType((p_208663_0_) -> Component.translatable("commands.origin.origin_not_found", p_208663_0_));
 
 	public static OriginArgumentType origin() {
 		return new OriginArgumentType();
@@ -30,12 +36,11 @@ public class OriginArgumentType implements ArgumentType<ResourceLocation> {
 		return ResourceLocation.read(p_parse_1_);
 	}
 
-	public static Origin getOrigin(CommandContext<CommandSourceStack> context, String argumentName) throws CommandSyntaxException {
+	public static ResourceKey<Origin> getOrigin(CommandContext<CommandSourceStack> context, String argumentName) throws CommandSyntaxException {
 		ResourceLocation id = context.getArgument(argumentName, ResourceLocation.class);
-		Origin origin = OriginsAPI.getOriginsRegistry().get(id);
-		if (origin == null)
+		if (!OriginsAPI.getOriginsRegistry(context.getSource().getServer()).containsKey(id))
 			throw ORIGIN_NOT_FOUND.create(id);
-		return origin;
+		return ResourceKey.create(OriginsDynamicRegistries.ORIGINS_REGISTRY, id);
 	}
 
 	@Override
@@ -47,8 +52,8 @@ public class OriginArgumentType implements ArgumentType<ResourceLocation> {
 			// no-op :)
 		}
 		if (layer != null) {
-			List<ResourceLocation> ids = new LinkedList<>(layer.origins());
-			ids.add(Origin.EMPTY.getRegistryName());
+			List<ResourceLocation> ids = layer.origins().stream().map(Holder::unwrapKey).flatMap(Optional::stream).map(ResourceKey::location).collect(Collectors.toCollection(LinkedList::new));
+			ids.add(OriginsBuiltinRegistries.ORIGINS.get().getKey(Origin.EMPTY));
 			return SharedSuggestionProvider.suggestResource(ids.stream(), builder);
 		} else {
 			return SharedSuggestionProvider.suggestResource(OriginsAPI.getOriginsRegistry().keySet(), builder);

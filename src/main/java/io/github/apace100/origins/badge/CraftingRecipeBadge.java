@@ -9,7 +9,6 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
 import net.minecraft.core.NonNullList;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TextComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.inventory.CraftingContainer;
@@ -56,7 +55,7 @@ public record CraftingRecipeBadge(ResourceLocation spriteId,
 	public List<ClientTooltipComponent> getTooltipComponents(ConfiguredPower<?, ?> powerType, int widthLimit, float time, Font textRenderer) {
 		List<ClientTooltipComponent> tooltips = new LinkedList<>();
 		if (Minecraft.getInstance().options.advancedItemTooltips) {
-			Component recipeIdText = new TextComponent(this.recipe.getId().toString()).withStyle(ChatFormatting.DARK_GRAY);
+			Component recipeIdText = Component.literal(this.recipe.getId().toString()).withStyle(ChatFormatting.DARK_GRAY);
 			widthLimit = Math.max(130, textRenderer.width(recipeIdText));
 			if (this.prefix != null) TooltipBadge.addLines(tooltips, this.prefix, textRenderer, widthLimit);
 			tooltips.add(new CraftingRecipeTooltipComponent(this.peekInputs(time), this.recipe.getResultItem().copy()));

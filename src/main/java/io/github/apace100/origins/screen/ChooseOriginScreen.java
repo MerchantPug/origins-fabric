@@ -13,11 +13,10 @@ import io.github.edwinmindcraft.origins.common.network.C2SChooseOrigin;
 import io.github.edwinmindcraft.origins.common.network.C2SChooseRandomOrigin;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.core.Registry;
+import net.minecraft.core.Holder;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.network.chat.TextComponent;
-import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -32,28 +31,26 @@ import java.util.Objects;
 
 public class ChooseOriginScreen extends OriginDisplayScreen {
 
-	private static final Comparator<Origin> COMPARATOR = Comparator.comparingInt((Origin a) -> a.getImpact().getImpactValue()).thenComparingInt(Origin::getOrder);
+	private static final Comparator<Holder<Origin>> COMPARATOR = Comparator.comparingInt((Holder<Origin> a) -> a.value().getImpact().getImpactValue()).thenComparingInt((Holder<Origin> a) -> a.value().getOrder());
 
-	private final List<OriginLayer> layerList;
+	private final List<Holder<OriginLayer>> layerList;
 	private final int currentLayerIndex;
 	private int currentOrigin = 0;
-	private final List<Origin> originSelection;
+	private final List<Holder<Origin>> originSelection;
 	private int maxSelection;
 
 	private Origin randomOrigin;
 
-	public ChooseOriginScreen(List<OriginLayer> layerList, int currentLayerIndex, boolean showDirtBackground) {
-		super(new TranslatableComponent(Origins.MODID + ".screen.choose_origin"), showDirtBackground);
+	public ChooseOriginScreen(List<Holder<OriginLayer>> layerList, int currentLayerIndex, boolean showDirtBackground) {
+		super(Component.translatable(Origins.MODID + ".screen.choose_origin"), showDirtBackground);
 		this.layerList = layerList;
 		this.currentLayerIndex = currentLayerIndex;
 		this.originSelection = new ArrayList<>(10);
 		Player player = Minecraft.getInstance().player;
-		OriginLayer currentLayer = layerList.get(currentLayerIndex);
-		Registry<Origin> originsRegistry = OriginsAPI.getOriginsRegistry();
-		currentLayer.origins(Objects.requireNonNull(player)).forEach(originId -> {
-			Origin origin = originsRegistry.get(originId);
-			if (origin != null && origin.isChoosable()) {
-				ItemStack displayItem = origin.getIcon().copy();
+		Holder<OriginLayer> currentLayer = layerList.get(currentLayerIndex);
+		currentLayer.value().origins(Objects.requireNonNull(player)).forEach(origin -> {
+			if (origin.isBound() && origin.value().isChoosable()) {
+				ItemStack displayItem = origin.value().getIcon().copy();
 				if (displayItem.getItem() == Items.PLAYER_HEAD) {
 					if (!displayItem.hasTag() || !Objects.requireNonNull(displayItem.getTag()).contains("SkullOwner")) {
 						displayItem.getOrCreateTag().putString("SkullOwner", player.getDisplayName().getString());
@@ -64,14 +61,14 @@ public class ChooseOriginScreen extends OriginDisplayScreen {
 		});
 		this.originSelection.sort(COMPARATOR);
 		this.maxSelection = this.originSelection.size();
-		if (currentLayer.allowRandom() && currentLayer.randomOrigins(player).size() > 0) {
+		if (currentLayer.value().allowRandom() && currentLayer.value().randomOrigins(player).size() > 0) {
 			this.maxSelection += 1;
 		}
 		if (this.maxSelection == 0) {
 			this.openNextLayerScreen();
 		}
-		Origin newOrigin = this.getCurrentOriginInternal();
-		this.showOrigin(newOrigin, layerList.get(currentLayerIndex), newOrigin == this.randomOrigin);
+		Holder<Origin> newOrigin = this.getCurrentOriginInternal();
+		this.showOrigin(newOrigin, layerList.get(currentLayerIndex), newOrigin.value() == this.randomOrigin);
 	}
 
 	private void openNextLayerScreen() {
@@ -89,24 +86,24 @@ public class ChooseOriginScreen extends OriginDisplayScreen {
 		this.guiLeft = (this.width - windowWidth) / 2;
 		this.guiTop = (this.height - windowHeight) / 2;
 		if (this.maxSelection > 1) {
-			this.addRenderableWidget(new Button(this.guiLeft - 40, this.height / 2 - 10, 20, 20, new TextComponent("<"), b -> {
+			this.addRenderableWidget(new Button(this.guiLeft - 40, this.height / 2 - 10, 20, 20, Component.literal("<"), b -> {
 				this.currentOrigin = (this.currentOrigin - 1 + this.maxSelection) % this.maxSelection;
-				Origin newOrigin = this.getCurrentOriginInternal();
-				this.showOrigin(newOrigin, this.layerList.get(this.currentLayerIndex), newOrigin == this.randomOrigin);
+				Holder<Origin> newOrigin = this.getCurrentOriginInternal();
+				this.showOrigin(newOrigin, this.layerList.get(this.currentLayerIndex), newOrigin.value() == this.randomOrigin);
 			}));
-			this.addRenderableWidget(new Button(this.guiLeft + windowWidth + 20, this.height / 2 - 10, 20, 20, new TextComponent(">"), b -> {
+			this.addRenderableWidget(new Button(this.guiLeft + windowWidth + 20, this.height / 2 - 10, 20, 20, Component.literal(">"), b -> {
 				this.currentOrigin = (this.currentOrigin + 1) % this.maxSelection;
-				Origin newOrigin = this.getCurrentOriginInternal();
-				this.showOrigin(newOrigin, this.layerList.get(this.currentLayerIndex), newOrigin == this.randomOrigin);
+				Holder<Origin> newOrigin = this.getCurrentOriginInternal();
+				this.showOrigin(newOrigin, this.layerList.get(this.currentLayerIndex), newOrigin.value() == this.randomOrigin);
 			}));
 		}
-		this.addRenderableWidget(new Button(this.guiLeft + windowWidth / 2 - 50, this.guiTop + windowHeight + 5, 100, 20, new TranslatableComponent(Origins.MODID + ".gui.select"), b -> {
-			ResourceLocation layer = OriginsAPI.getLayersRegistry().getKey(this.layerList.get(this.currentLayerIndex));
+		this.addRenderableWidget(new Button(this.guiLeft + windowWidth / 2 - 50, this.guiTop + windowHeight + 5, 100, 20, Component.translatable(Origins.MODID + ".gui.select"), b -> {
+			ResourceLocation layer = this.layerList.get(this.currentLayerIndex).unwrapKey().map(ResourceKey::location).orElseThrow();
 			this.openNextLayerScreen();
 			if (this.currentOrigin == this.originSelection.size())
 				OriginsCommon.CHANNEL.send(PacketDistributor.SERVER.noArg(), new C2SChooseRandomOrigin(layer));
 			else
-				OriginsCommon.CHANNEL.send(PacketDistributor.SERVER.noArg(), new C2SChooseOrigin(layer, this.getCurrentOrigin().getRegistryName()));
+				OriginsCommon.CHANNEL.send(PacketDistributor.SERVER.noArg(), new C2SChooseOrigin(layer, OriginsAPI.getOriginsRegistry().getKey(this.getCurrentOrigin())));
 		}));
 	}
 
@@ -114,25 +111,26 @@ public class ChooseOriginScreen extends OriginDisplayScreen {
 	protected Component getTitleText() {
 		if (this.getCurrentLayer().title().choose() != null)
 			return this.getCurrentLayer().title().choose();
-		return new TranslatableComponent(Origins.MODID + ".gui.choose_origin.title", this.getCurrentLayer().name());
+		return Component.translatable(Origins.MODID + ".gui.choose_origin.title", this.getCurrentLayer().name());
 	}
 
-	private Origin getCurrentOriginInternal() {
+	private Holder<Origin> getCurrentOriginInternal() {
 		if (this.currentOrigin == this.originSelection.size()) {
 			if (this.randomOrigin == null) {
 				this.initRandomOrigin();
 			}
-			return this.randomOrigin;
+			return Holder.direct(this.randomOrigin);
 		}
 		return this.originSelection.get(this.currentOrigin);
 	}
 
 	private void initRandomOrigin() {
-		Registry<Origin> registry = OriginsAPI.getOriginsRegistry();
 		this.randomOrigin = PartialOrigin.builder().icon(new ItemStack(ModItems.ORB_OF_ORIGIN.get())).impact(Impact.NONE).order(Integer.MAX_VALUE).loadingOrder(Integer.MAX_VALUE).build().create(Origins.identifier("random"));
-		MutableComponent text = new TextComponent("");
-		List<Origin> randoms = this.layerList.get(this.currentLayerIndex).randomOrigins(Objects.requireNonNull(Minecraft.getInstance().player)).stream().map(registry::get).filter(Objects::nonNull).sorted(COMPARATOR).toList();
-		randoms.forEach(x -> text.append(x.getName()).append("\n"));
+		MutableComponent text = Component.literal("");
+		List<Holder<Origin>> randoms = this.layerList.get(this.currentLayerIndex).value()
+				.randomOrigins(Objects.requireNonNull(Minecraft.getInstance().player)).stream()
+				.filter(Objects::nonNull).sorted(COMPARATOR).toList();
+		randoms.forEach(x -> text.append(x.value().getName()).append("\n"));
 		this.setRandomOriginText(text);
 	}
 

@@ -7,22 +7,19 @@ import io.github.apace100.origins.badge.Badge;
 import io.github.apace100.origins.badge.BadgeManager;
 import io.github.apace100.origins.mixin.ScreenAccessor;
 import io.github.apace100.origins.origin.Impact;
-import io.github.apace100.origins.util.PowerKeyManager;
 import io.github.edwinmindcraft.apoli.api.ApoliAPI;
 import io.github.edwinmindcraft.apoli.api.power.configuration.ConfiguredPower;
 import io.github.edwinmindcraft.origins.api.origin.Origin;
 import io.github.edwinmindcraft.origins.api.origin.OriginLayer;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.KeyMapping;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
+import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
 import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
-import net.minecraft.network.chat.TextComponent;
-import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.item.ItemStack;
@@ -45,25 +42,25 @@ public class OriginDisplayScreen extends Screen {
 	protected static final int windowHeight = 182;
 	protected int scrollPos = 0;
 	private int currentMaxScroll = 0;
-    private float time = 0;
+	private float time = 0;
 
 	protected int guiTop, guiLeft;
 
 	protected final boolean showDirtBackground;
 
-    private final LinkedList<RenderedBadge> renderedBadges = new LinkedList<>();
+	private final LinkedList<RenderedBadge> renderedBadges = new LinkedList<>();
 
 	public OriginDisplayScreen(Component title, boolean showDirtBackground) {
 		super(title);
 		this.showDirtBackground = showDirtBackground;
 	}
 
-	public void showOrigin(Origin origin, OriginLayer layer, boolean isRandom) {
-		this.origin = origin;
-		this.layer = layer;
+	public void showOrigin(Holder<Origin> origin, Holder<OriginLayer> layer, boolean isRandom) {
+		this.origin = origin != null ? origin.value() : null;
+		this.layer = layer != null ? layer.value() : null;
 		this.isOriginRandom = isRandom;
 		this.scrollPos = 0;
-        this.time = 0;
+		this.time = 0;
 	}
 
 	public void setRandomOriginText(Component text) {
@@ -97,7 +94,7 @@ public class OriginDisplayScreen extends Screen {
 	@Override
 	public void render(@NotNull PoseStack matrices, int mouseX, int mouseY, float delta) {
 		this.renderedBadges.clear();
-        this.time += delta;
+		this.time += delta;
 		this.renderBackground(matrices);
 		this.renderOriginWindow(matrices, mouseX, mouseY);
 		super.render(matrices, mouseX, mouseY, delta);
@@ -173,21 +170,21 @@ public class OriginDisplayScreen extends Screen {
 		return super.mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
 	}
 
-    private void renderBadgeTooltip(PoseStack matrices, int mouseX, int mouseY) {
-        for(RenderedBadge rb : this.renderedBadges) {
-            if(mouseX >= rb.x &&
-               mouseX < rb.x + 9 &&
-               mouseY >= rb.y &&
-               mouseY < rb.y + 9 &&
-               rb.hasTooltip()) {
-                int widthLimit = this.width - mouseX - 24;
-                ((ScreenAccessor)this).invokeRenderTooltipFromComponents(matrices, rb.getTooltipComponents(this.font, widthLimit), mouseX, mouseY);
-            }
-        }
-    }
+	private void renderBadgeTooltip(PoseStack matrices, int mouseX, int mouseY) {
+		for (RenderedBadge rb : this.renderedBadges) {
+			if (mouseX >= rb.x &&
+				mouseX < rb.x + 9 &&
+				mouseY >= rb.y &&
+				mouseY < rb.y + 9 &&
+				rb.hasTooltip()) {
+				int widthLimit = this.width - mouseX - 24;
+				((ScreenAccessor) this).invokeRenderTooltipFromComponents(matrices, rb.getTooltipComponents(this.font, widthLimit), mouseX, mouseY);
+			}
+		}
+	}
 
 	protected Component getTitleText() {
-		return new TextComponent("Origins");
+		return Component.literal("Origins");
 	}
 
 	private void renderOriginWindow(PoseStack matrices, int mouseX, int mouseY) {
@@ -221,7 +218,7 @@ public class OriginDisplayScreen extends Screen {
 		}
 		if (mouseX >= this.guiLeft + 128 && mouseX <= this.guiLeft + 158
 			&& mouseY >= this.guiTop + 19 && mouseY <= this.guiTop + 27) {
-			Component ttc = new TranslatableComponent(Origins.MODID + ".gui.impact.impact").append(": ").append(impact.getTextComponent());
+			Component ttc = Component.translatable(Origins.MODID + ".gui.impact.impact").append(": ").append(impact.getTextComponent());
 			this.renderTooltip(matrices, ttc, mouseX, mouseY);
 		}
 	}
@@ -305,13 +302,13 @@ public class OriginDisplayScreen extends Screen {
 					Collection<Badge> badges = BadgeManager.getPowerBadges(id);
 					int xStart = x + tw + 4;
 					int bi = 0;
-                    for(Badge badge : badges) {
-                        RenderedBadge renderedBadge = new RenderedBadge(p, badge,xStart + 10 * bi, y - 1);
-                        this.renderedBadges.add(renderedBadge);
-                        RenderSystem.setShaderTexture(0, badge.spriteId());
-                        blit(matrices, xStart + 10 * bi, y - 1, 0, 0, 9, 9, 9, 9);
-                        bi++;
-                    }
+					for (Badge badge : badges) {
+						RenderedBadge renderedBadge = new RenderedBadge(p, badge, xStart + 10 * bi, y - 1);
+						this.renderedBadges.add(renderedBadge);
+						RenderSystem.setShaderTexture(0, badge.spriteId());
+						blit(matrices, xStart + 10 * bi, y - 1, 0, 0, 9, 9, 9, 9);
+						bi++;
+					}
 				}
 				for (FormattedCharSequence line : drawLines) {
 					y += 12;
@@ -319,7 +316,6 @@ public class OriginDisplayScreen extends Screen {
 						this.font.draw(matrices, line, x + 2, y, 0xCCCCCC);
 					}
 				}
-
 				y += 14;
 			}
 		}
@@ -330,27 +326,25 @@ public class OriginDisplayScreen extends Screen {
 		}
 	}
 
-    private class RenderedBadge {
-        private final ConfiguredPower<?, ?> powerType;
-        private final Badge badge;
-        private final int x;
-        private final int y;
+	private class RenderedBadge {
+		private final ConfiguredPower<?, ?> powerType;
+		private final Badge badge;
+		private final int x;
+		private final int y;
 
-        public RenderedBadge(ConfiguredPower<?, ?> powerType, Badge badge, int x, int y) {
-            this.powerType = powerType;
-            this.badge = badge;
-            this.x = x;
-            this.y = y;
-        }
+		public RenderedBadge(ConfiguredPower<?, ?> powerType, Badge badge, int x, int y) {
+			this.powerType = powerType;
+			this.badge = badge;
+			this.x = x;
+			this.y = y;
+		}
 
-        public boolean hasTooltip() {
-            return this.badge.hasTooltip();
-        }
+		public boolean hasTooltip() {
+			return this.badge.hasTooltip();
+		}
 
-        public List<ClientTooltipComponent> getTooltipComponents(Font textRenderer, int widthLimit) {
-            return this.badge.getTooltipComponents(this.powerType, widthLimit, OriginDisplayScreen.this.time, textRenderer);
-        }
-
-    }
-
+		public List<ClientTooltipComponent> getTooltipComponents(Font textRenderer, int widthLimit) {
+			return this.badge.getTooltipComponents(this.powerType, widthLimit, OriginDisplayScreen.this.time, textRenderer);
+		}
+	}
 }

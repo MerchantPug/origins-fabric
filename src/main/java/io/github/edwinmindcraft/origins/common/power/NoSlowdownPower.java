@@ -9,7 +9,7 @@ import net.minecraft.world.level.block.state.BlockState;
 
 public class NoSlowdownPower extends PowerFactory<NoSlowdownConfiguration> {
 	public static boolean isActive(Entity player, BlockState state) {
-		return IPowerContainer.getPowers(player, OriginsPowerTypes.NO_SLOWDOWN.get()).stream().anyMatch(x -> x.getConfiguration().test(state));
+		return IPowerContainer.getPowers(player, OriginsPowerTypes.NO_SLOWDOWN.get()).stream().anyMatch(x -> x.value().getConfiguration().test(state));
 	}
 
 

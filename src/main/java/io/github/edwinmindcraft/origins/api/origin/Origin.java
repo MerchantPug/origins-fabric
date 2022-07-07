@@ -2,28 +2,34 @@ package io.github.edwinmindcraft.origins.api.origin;
 
 import com.google.common.collect.ImmutableSet;
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import io.github.apace100.calio.data.SerializableDataTypes;
 import io.github.apace100.origins.data.OriginsDataTypes;
 import io.github.apace100.origins.origin.Impact;
 import io.github.edwinmindcraft.apoli.api.power.configuration.ConfiguredPower;
 import io.github.edwinmindcraft.apoli.api.registry.ApoliDynamicRegistries;
+import io.github.edwinmindcraft.calio.api.CalioAPI;
 import io.github.edwinmindcraft.calio.api.network.CalioCodecHelper;
+import io.github.edwinmindcraft.calio.api.network.CodecSet;
 import io.github.edwinmindcraft.calio.api.registry.ICalioDynamicRegistryManager;
+import io.github.edwinmindcraft.origins.api.registry.OriginsBuiltinRegistries;
+import io.github.edwinmindcraft.origins.api.registry.OriginsDynamicRegistries;
+import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TextComponent;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.registries.ForgeRegistryEntry;
 import net.minecraftforge.registries.ObjectHolder;
 
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
-public class Origin extends ForgeRegistryEntry.UncheckedRegistryEntry<Origin> {
-	@ObjectHolder("origins:empty")
-	public static final Origin EMPTY = new Origin(ImmutableSet.of(), ItemStack.EMPTY, true, -1, Impact.NONE, new TextComponent(""), new TextComponent(""), ImmutableSet.of(), true);
+public class Origin {
+	@ObjectHolder(value = "origins:empty", registryName = "origins:origins")
+	public static final Origin EMPTY = new Origin(ImmutableSet.of(), ItemStack.EMPTY, true, -1, Impact.NONE, Component.literal(""), Component.literal(""), ImmutableSet.of(), true);
 
 	private final Set<ResourceLocation> powers;
 	private final ItemStack icon;
@@ -46,6 +52,13 @@ public class Origin extends ForgeRegistryEntry.UncheckedRegistryEntry<Origin> {
 			CalioCodecHelper.setOf(OriginUpgrade.CODEC).fieldOf("upgrades").forGetter(Origin::getUpgrades),
 			CalioCodecHelper.optionalField(CalioCodecHelper.BOOL, "special", false).forGetter(Origin::isSpecial)
 	).apply(instance, Origin::new));
+
+	public static final CodecSet<Origin> CODEC_SET = CalioCodecHelper.forDynamicRegistry(OriginsDynamicRegistries.ORIGINS_REGISTRY, SerializableDataTypes.IDENTIFIER, CODEC);
+	public static final Codec<Holder<Origin>> HOLDER_CODEC = CODEC_SET.holderRef();
+
+	public static MapCodec<Holder<Origin>> optional(String name) {
+		return CalioCodecHelper.registryDefaultedField(HOLDER_CODEC, name, OriginsDynamicRegistries.ORIGINS_REGISTRY, OriginsBuiltinRegistries.ORIGINS);
+	}
 
 	public Origin(Set<ResourceLocation> powers, ItemStack icon, boolean unchoosable, int order, Impact impact,
 				  Component name, Component description, Set<OriginUpgrade> upgrades, boolean special) {
@@ -124,7 +137,11 @@ public class Origin extends ForgeRegistryEntry.UncheckedRegistryEntry<Origin> {
 
 	@Override
 	public String toString() {
-		StringBuilder builder = new StringBuilder("Origin(").append(this.getRegistryName()).append(")[");
+		ResourceLocation name = CalioAPI.getDynamicRegistries()
+				.getOrEmpty(OriginsDynamicRegistries.ORIGINS_REGISTRY)
+				.flatMap(x -> x.getResourceKey(this))
+				.map(ResourceKey::location).orElse(null);
+		StringBuilder builder = new StringBuilder("Origin(").append(name).append(")[");
 		boolean first = true;
 		for (ResourceLocation power : this.getPowers()) {
 			if (first)
@@ -134,18 +151,5 @@ public class Origin extends ForgeRegistryEntry.UncheckedRegistryEntry<Origin> {
 			builder.append(power);
 		}
 		return builder.append(']').toString();
-	}
-
-	@Override
-	public boolean equals(Object o) {
-		if (this == o) return true;
-		if (o == null || this.getClass() != o.getClass()) return false;
-		Origin origin = (Origin) o;
-		return Objects.equals(this.getRegistryName(), origin.getRegistryName());
-	}
-
-	@Override
-	public int hashCode() {
-		return Objects.hash(this.getRegistryName());
 	}
 }

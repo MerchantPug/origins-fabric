@@ -5,9 +5,9 @@ import io.github.apace100.origins.Origins;
 import io.github.apace100.origins.badge.BadgeFactories;
 import io.github.apace100.origins.badge.BadgeManager;
 import io.github.apace100.origins.power.OriginsPowerTypes;
-import io.github.apace100.origins.registry.ModLoot;
 import io.github.edwinmindcraft.origins.api.capabilities.IOriginContainer;
 import io.github.edwinmindcraft.origins.common.network.*;
+import io.github.edwinmindcraft.origins.common.registry.OriginArgumentTypes;
 import io.github.edwinmindcraft.origins.common.registry.OriginRegisters;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.common.capabilities.RegisterCapabilitiesEvent;
@@ -78,6 +78,6 @@ public class OriginsCommon {
 
 	public static void commonSetup(FMLCommonSetupEvent event) {
 		initializeNetwork();
-		event.enqueueWork(ModLoot::register);
+		event.enqueueWork(OriginArgumentTypes::initialize);
 	}
 }
