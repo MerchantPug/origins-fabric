@@ -25,6 +25,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public final class OriginLayer implements Comparable<OriginLayer> {
+	public static final Codec<Holder<OriginLayer>> HOLDER_REFERENCE = CalioCodecHelper.holderRef(OriginsDynamicRegistries.LAYERS_REGISTRY, SerializableDataTypes.IDENTIFIER);
 
 	public static final Codec<OriginLayer> CODEC = RecordCodecBuilder.create(instance -> instance.group(
 			CalioCodecHelper.INT.fieldOf("order").forGetter(OriginLayer::order),
@@ -43,7 +44,6 @@ public final class OriginLayer implements Comparable<OriginLayer> {
 	).apply(instance, OriginLayer::new));
 
 	public static final CodecSet<OriginLayer> CODEC_SET = CalioCodecHelper.forDynamicRegistry(OriginsDynamicRegistries.LAYERS_REGISTRY, SerializableDataTypes.IDENTIFIER, CODEC);
-	public static final Codec<Holder<OriginLayer>> HOLDER_CODEC = CODEC_SET.holderRef();
 
 	private final int order;
 	private final Set<ConditionedOrigin> conditionedOrigins;

@@ -10,7 +10,7 @@ import net.minecraft.resources.ResourceLocation;
 public record OriginUpgrade(ResourceLocation advancement, Holder<Origin> origin, String announcement) {
 	public static final MapCodec<OriginUpgrade> MAP_CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
 			ResourceLocation.CODEC.fieldOf("condition").forGetter(OriginUpgrade::advancement),
-			Origin.HOLDER_CODEC.fieldOf("origin").forGetter(OriginUpgrade::origin),
+			Origin.HOLDER_REFERENCE.fieldOf("origin").forGetter(OriginUpgrade::origin),
 			CalioCodecHelper.optionalField(Codec.STRING, "announcement", "").forGetter(OriginUpgrade::announcement)
 	).apply(instance, OriginUpgrade::new));
 

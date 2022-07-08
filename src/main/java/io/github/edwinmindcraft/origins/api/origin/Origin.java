@@ -41,6 +41,8 @@ public class Origin {
 	private final Set<OriginUpgrade> upgrades;
 	private final boolean special;
 
+	public static final Codec<Holder<Origin>> HOLDER_REFERENCE = CalioCodecHelper.holderRef(OriginsDynamicRegistries.ORIGINS_REGISTRY, SerializableDataTypes.IDENTIFIER);
+
 	public static final Codec<Origin> CODEC = RecordCodecBuilder.create(instance -> instance.group(
 			CalioCodecHelper.setOf(ResourceLocation.CODEC).fieldOf("powers").forGetter(Origin::getPowers),
 			CalioCodecHelper.optionalField(ItemStack.CODEC, "icon", ItemStack.EMPTY).forGetter(Origin::getIcon),
@@ -54,10 +56,9 @@ public class Origin {
 	).apply(instance, Origin::new));
 
 	public static final CodecSet<Origin> CODEC_SET = CalioCodecHelper.forDynamicRegistry(OriginsDynamicRegistries.ORIGINS_REGISTRY, SerializableDataTypes.IDENTIFIER, CODEC);
-	public static final Codec<Holder<Origin>> HOLDER_CODEC = CODEC_SET.holderRef();
 
 	public static MapCodec<Holder<Origin>> optional(String name) {
-		return CalioCodecHelper.registryDefaultedField(HOLDER_CODEC, name, OriginsDynamicRegistries.ORIGINS_REGISTRY, OriginsBuiltinRegistries.ORIGINS);
+		return CalioCodecHelper.registryDefaultedField(HOLDER_REFERENCE, name, OriginsDynamicRegistries.ORIGINS_REGISTRY, OriginsBuiltinRegistries.ORIGINS);
 	}
 
 	public Origin(Set<ResourceLocation> powers, ItemStack icon, boolean unchoosable, int order, Impact impact,

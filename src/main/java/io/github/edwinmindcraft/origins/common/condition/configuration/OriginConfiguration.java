@@ -14,7 +14,7 @@ import java.util.Optional;
 public record OriginConfiguration(Holder<Origin> origin,
 								  @Nullable Holder<OriginLayer> layer) implements IDynamicFeatureConfiguration {
 	public static final Codec<OriginConfiguration> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-			Origin.HOLDER_CODEC.fieldOf("origin").forGetter(OriginConfiguration::origin),
-			CalioCodecHelper.optionalField(OriginLayer.HOLDER_CODEC, "layer").forGetter(x -> Optional.ofNullable(x.layer()))
+			Origin.HOLDER_REFERENCE.fieldOf("origin").forGetter(OriginConfiguration::origin),
+			CalioCodecHelper.optionalField(OriginLayer.HOLDER_REFERENCE, "layer").forGetter(x -> Optional.ofNullable(x.layer()))
 	).apply(instance, (o, l) -> new OriginConfiguration(o, l.orElse(null))));
 }
