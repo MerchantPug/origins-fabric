@@ -177,7 +177,7 @@ public class OriginContainer implements IOriginContainer, ICapabilitySerializabl
 					return Stream.empty();
 				HashSet<ResourceKey<ConfiguredPower<?, ?>>> names = new HashSet<>();
 				names.add(ResourceKey.create(ApoliDynamicRegistries.CONFIGURED_POWER_KEY, id));
-				x.getChildren().stream().filter(Holder::isBound).map(Holder::value).map(registry::getResourceKey).flatMap(Optional::stream).forEach(names::add);
+				names.addAll(x.getChildrenKeys());
 				return names.stream();
 			}).collect(ImmutableSet.toImmutableSet());
 			Set<ResourceKey<ConfiguredPower<?, ?>>> toRemove = currentPowers.stream().filter(x -> !newPowers.contains(x)).collect(Collectors.toSet());

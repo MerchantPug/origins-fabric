@@ -34,7 +34,7 @@ public class PowerKeyManager {
 				return "";
 			return powerType.getKey(null)
 					.map(key -> key.key().equals("none") ? "key.origins.primary_active" : key.key())
-					.or(() -> powerType.getContainedPowers().values().stream().filter(Holder::isBound).map(Holder::value).map(x -> getKeyFromPower(ApoliAPI.getPowers().getKey(x))).filter(x -> !x.isBlank()).findFirst())
+					.or(() -> powerType.getContainedPowerKeys().stream().filter(powers::containsKey).map(x -> getKeyFromPower(x.location())).filter(x -> !x.isBlank()).findFirst())
 					.orElse("");
 		}
 		return "";
