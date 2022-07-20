@@ -1,14 +1,15 @@
 {
-  "item_condition": {
-    "ingredient": {
-      "item": "minecraft:potion"
-    },
-    "type": "apoli:ingredient"
-  },
+  "type": "apoli:action_on_item_use",
   "entity_action": {
-    "value": 60,
-    "type": "apoli:gain_air"
+    "type": "apoli:gain_air",
+    "value": 60
   },
   "hidden": true,
-  "type": "apoli:action_on_item_use"
+  "item_action": "apoli:nothing",
+  "item_condition": {
+    "type": "apoli:ingredient",
+    "ingredient": {
+      "item": "minecraft:potion"
+    }
+  }
 }

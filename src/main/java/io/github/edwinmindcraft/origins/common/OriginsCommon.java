@@ -5,7 +5,16 @@ import io.github.apace100.origins.Origins;
 import io.github.apace100.origins.badge.BadgeFactories;
 import io.github.apace100.origins.badge.BadgeManager;
 import io.github.apace100.origins.power.OriginsPowerTypes;
+import io.github.edwinmindcraft.apoli.api.registry.ApoliDynamicRegistries;
+import io.github.edwinmindcraft.calio.api.event.CalioDynamicRegistryEvent;
+import io.github.edwinmindcraft.calio.api.registry.ICalioDynamicRegistryManager;
 import io.github.edwinmindcraft.origins.api.capabilities.IOriginContainer;
+import io.github.edwinmindcraft.origins.api.origin.Origin;
+import io.github.edwinmindcraft.origins.api.origin.OriginLayer;
+import io.github.edwinmindcraft.origins.api.registry.OriginsBuiltinRegistries;
+import io.github.edwinmindcraft.origins.api.registry.OriginsDynamicRegistries;
+import io.github.edwinmindcraft.origins.common.data.LayerLoader;
+import io.github.edwinmindcraft.origins.common.data.OriginLoader;
 import io.github.edwinmindcraft.origins.common.network.*;
 import io.github.edwinmindcraft.origins.common.registry.OriginArgumentTypes;
 import io.github.edwinmindcraft.origins.common.registry.OriginRegisters;
@@ -38,26 +47,26 @@ public class OriginsCommon {
 		int message = 0;
 		CHANNEL.messageBuilder(S2CSynchronizeOrigin.class, message++, NetworkDirection.PLAY_TO_CLIENT)
 				.encoder(S2CSynchronizeOrigin::encode).decoder(withLogging(S2CSynchronizeOrigin::decode))
-				.consumer(S2CSynchronizeOrigin::handle).add();
+				.consumerNetworkThread(S2CSynchronizeOrigin::handle).add();
 		CHANNEL.messageBuilder(S2COpenOriginScreen.class, message++, NetworkDirection.PLAY_TO_CLIENT)
 				.encoder(S2COpenOriginScreen::encode).decoder(withLogging(S2COpenOriginScreen::decode))
-				.consumer(S2COpenOriginScreen::handle).add();
+				.consumerNetworkThread(S2COpenOriginScreen::handle).add();
 		CHANNEL.messageBuilder(S2CConfirmOrigin.class, message++, NetworkDirection.PLAY_TO_CLIENT)
 				.encoder(S2CConfirmOrigin::encode).decoder(withLogging(S2CConfirmOrigin::decode))
-				.consumer(S2CConfirmOrigin::handle).add();
+				.consumerNetworkThread(S2CConfirmOrigin::handle).add();
 		CHANNEL.messageBuilder(S2CSynchronizeBadges.class, message++, NetworkDirection.PLAY_TO_CLIENT)
 				.encoder(S2CSynchronizeBadges::encode).decoder(withLogging(S2CSynchronizeBadges::decode))
-				.consumer(S2CSynchronizeBadges::handle).add();
+				.consumerNetworkThread(S2CSynchronizeBadges::handle).add();
 
 		CHANNEL.messageBuilder(C2SChooseRandomOrigin.class, message++, NetworkDirection.PLAY_TO_SERVER)
 				.encoder(C2SChooseRandomOrigin::encode).decoder(withLogging(C2SChooseRandomOrigin::decode))
-				.consumer(C2SChooseRandomOrigin::handle).add();
+				.consumerNetworkThread(C2SChooseRandomOrigin::handle).add();
 		CHANNEL.messageBuilder(C2SChooseOrigin.class, message++, NetworkDirection.PLAY_TO_SERVER)
 				.encoder(C2SChooseOrigin::encode).decoder(withLogging(C2SChooseOrigin::decode))
-				.consumer(C2SChooseOrigin::handle).add();
+				.consumerNetworkThread(C2SChooseOrigin::handle).add();
 		CHANNEL.messageBuilder(C2SAcknowledgeOrigins.class, message++, NetworkDirection.PLAY_TO_SERVER)
 				.encoder(C2SAcknowledgeOrigins::encode).decoder(withLogging(C2SAcknowledgeOrigins::decode))
-				.consumer(C2SAcknowledgeOrigins::handle).add();
+				.consumerNetworkThread(C2SAcknowledgeOrigins::handle).add();
 
 		Origins.LOGGER.debug("Registered {} packets", message);
 	}
@@ -68,6 +77,7 @@ public class OriginsCommon {
 		OriginsPowerTypes.register();
 		BadgeFactories.bootstrap();
 		BadgeManager.init();
+		mod.addListener(OriginsCommon::initializeDynamicRegistries);
 		mod.addListener(OriginsCommon::registerCapabilities);
 		mod.addListener(OriginsCommon::commonSetup);
 	}
@@ -79,5 +89,16 @@ public class OriginsCommon {
 	public static void commonSetup(FMLCommonSetupEvent event) {
 		initializeNetwork();
 		event.enqueueWork(OriginArgumentTypes::initialize);
+	}
+
+	public static void initializeDynamicRegistries(CalioDynamicRegistryEvent.Initialize event) {
+		ICalioDynamicRegistryManager registryManager = event.getRegistryManager();
+		registryManager.addForge(OriginsDynamicRegistries.ORIGINS_REGISTRY, OriginsBuiltinRegistries.ORIGINS, Origin.CODEC);
+		registryManager.addReload(OriginsDynamicRegistries.ORIGINS_REGISTRY, "origins", OriginLoader.INSTANCE);
+		registryManager.addValidation(OriginsDynamicRegistries.ORIGINS_REGISTRY, OriginLoader.INSTANCE, Origin.class, ApoliDynamicRegistries.CONFIGURED_POWER_KEY);
+
+		registryManager.add(OriginsDynamicRegistries.LAYERS_REGISTRY, OriginLayer.CODEC);
+		registryManager.addReload(OriginsDynamicRegistries.LAYERS_REGISTRY, "origin_layers", LayerLoader.INSTANCE);
+		registryManager.addValidation(OriginsDynamicRegistries.LAYERS_REGISTRY, LayerLoader.INSTANCE, OriginLayer.class, OriginsDynamicRegistries.ORIGINS_REGISTRY);
 	}
 }

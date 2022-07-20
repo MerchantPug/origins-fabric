@@ -1,11 +1,17 @@
 {
-  "modifier": {
-    "name": "Extra damage while fall flying",
-    "value": 1.0,
-    "operation": "multiply_base"
-  },
+  "type": "apoli:modify_damage_dealt",
+  "bientity_action": "apoli:nothing",
+  "bientity_condition": "apoli:allow",
   "condition": {
     "type": "apoli:fall_flying"
   },
-  "type": "apoli:modify_damage_dealt"
+  "damage_condition": "apoli:allow",
+  "modifier": {
+    "name": "Extra damage while fall flying",
+    "operation": "multiply_base",
+    "value": 1.0
+  },
+  "self_action": "apoli:nothing",
+  "target_action": "apoli:nothing",
+  "target_condition": "apoli:allow"
 }

@@ -26,7 +26,7 @@ public class OriginRegisters {
 	public static final DeferredRegister<PowerFactory<?>> POWER_FACTORIES = DeferredRegister.create(ApoliRegistries.POWER_FACTORY_KEY, Origins.MODID);
 	public static final DeferredRegister<Origin> ORIGINS = DeferredRegister.create(OriginsDynamicRegistries.ORIGINS_REGISTRY, Origins.MODID);
 	public static final DeferredRegister<BadgeFactory> BADGE_FACTORIES = DeferredRegister.create(OriginsBuiltinRegistries.BADGE_FACTORY_KEY, Origins.MODID);
-	public static final DeferredRegister<EntityType<?>> ENTITY_TYPES = DeferredRegister.create(ForgeRegistries.ENTITIES, Origins.MODID);
+	public static final DeferredRegister<EntityType<?>> ENTITY_TYPES = DeferredRegister.create(ForgeRegistries.ENTITY_TYPES, Origins.MODID);
 	public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, Origins.MODID);
 	public static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(ForgeRegistries.BLOCKS, Origins.MODID);
 	public static final DeferredRegister<Enchantment> ENCHANTMENTS = DeferredRegister.create(ForgeRegistries.ENCHANTMENTS, Origins.MODID);

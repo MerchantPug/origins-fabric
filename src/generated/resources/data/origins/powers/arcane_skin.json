@@ -1,6 +1,6 @@
 {
-  "red": 0.5,
-  "green": 0.5,
+  "type": "apoli:model_color",
   "alpha": 0.7,
-  "type": "apoli:model_color"
+  "green": 0.5,
+  "red": 0.5
 }

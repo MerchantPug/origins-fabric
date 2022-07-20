@@ -2,16 +2,13 @@ package io.github.apace100.origins;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import io.github.apace100.apoli.ApoliClient;
-import io.github.apace100.origins.registry.ModBlocks;
 import io.github.apace100.origins.registry.ModEntities;
 import net.minecraft.client.KeyMapping;
-import net.minecraft.client.renderer.ItemBlockRenderTypes;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.ThrownItemRenderer;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.client.ClientRegistry;
 import net.minecraftforge.client.event.EntityRenderersEvent;
+import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
@@ -40,14 +37,15 @@ public class OriginsClient {
 		IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
 		bus.addListener(OriginsClient::clientSetup);
 		bus.addListener(OriginsClient::entityRenderers);
+		bus.addListener(OriginsClient::registerKeyBindings);
 	}
 
-	public static void clientSetup(FMLClientSetupEvent event) {
-		event.enqueueWork(() -> ItemBlockRenderTypes.setRenderLayer(ModBlocks.TEMPORARY_COBWEB.get(), RenderType.cutout()));
+	public static void clientSetup(FMLClientSetupEvent event) {}
 
-		ClientRegistry.registerKeyBinding(usePrimaryActivePowerKeybind);
-		ClientRegistry.registerKeyBinding(useSecondaryActivePowerKeybind);
-		ClientRegistry.registerKeyBinding(viewCurrentOriginKeybind);
+	private static void registerKeyBindings(RegisterKeyMappingsEvent event) {
+		event.register(usePrimaryActivePowerKeybind);
+		event.register(useSecondaryActivePowerKeybind);
+		event.register(viewCurrentOriginKeybind);
 	}
 
 	public static void entityRenderers(EntityRenderersEvent.RegisterRenderers event) {

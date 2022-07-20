@@ -1,5 +1,5 @@
 {
-  "tag": "origins:cobwebs",
+  "type": "origins:no_slowdown",
   "hidden": true,
-  "type": "origins:no_slowdown"
+  "tag": "#origins:cobwebs"
 }

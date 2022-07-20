@@ -11,19 +11,13 @@ import io.github.apace100.origins.origin.OriginRegistry;
 import io.github.apace100.origins.power.OriginsPowerTypes;
 import io.github.apace100.origins.registry.ModDamageSources;
 import io.github.edwinmindcraft.apoli.api.component.IPowerContainer;
-import io.github.edwinmindcraft.apoli.api.registry.ApoliDynamicRegistries;
 import io.github.edwinmindcraft.calio.api.event.CalioDynamicRegistryEvent;
 import io.github.edwinmindcraft.calio.api.event.DynamicRegistrationEvent;
-import io.github.edwinmindcraft.calio.api.registry.ICalioDynamicRegistryManager;
 import io.github.edwinmindcraft.origins.api.OriginsAPI;
 import io.github.edwinmindcraft.origins.api.capabilities.IOriginContainer;
 import io.github.edwinmindcraft.origins.api.origin.Origin;
-import io.github.edwinmindcraft.origins.api.origin.OriginLayer;
-import io.github.edwinmindcraft.origins.api.registry.OriginsBuiltinRegistries;
 import io.github.edwinmindcraft.origins.api.registry.OriginsDynamicRegistries;
 import io.github.edwinmindcraft.origins.common.capabilities.OriginContainer;
-import io.github.edwinmindcraft.origins.common.data.LayerLoader;
-import io.github.edwinmindcraft.origins.common.data.OriginLoader;
 import io.github.edwinmindcraft.origins.common.network.S2COpenOriginScreen;
 import net.minecraft.ChatFormatting;
 import net.minecraft.advancements.Advancement;
@@ -102,22 +96,10 @@ public class OriginsEventHandler {
 	}
 
 	@SubscribeEvent
-	public static void addRegistries(CalioDynamicRegistryEvent.Initialize event) {
-		ICalioDynamicRegistryManager registryManager = event.getRegistryManager();
-		registryManager.addForge(OriginsDynamicRegistries.ORIGINS_REGISTRY, OriginsBuiltinRegistries.ORIGINS, Origin.CODEC);
-		registryManager.addReload(OriginsDynamicRegistries.ORIGINS_REGISTRY, "origins", OriginLoader.INSTANCE);
-		registryManager.addValidation(OriginsDynamicRegistries.ORIGINS_REGISTRY, OriginLoader.INSTANCE, Origin.class, ApoliDynamicRegistries.CONFIGURED_POWER_KEY);
-
-		registryManager.add(OriginsDynamicRegistries.LAYERS_REGISTRY, OriginLayer.CODEC);
-		registryManager.addReload(OriginsDynamicRegistries.LAYERS_REGISTRY, "origin_layers", LayerLoader.INSTANCE);
-		registryManager.addValidation(OriginsDynamicRegistries.LAYERS_REGISTRY, LayerLoader.INSTANCE, OriginLayer.class, OriginsDynamicRegistries.ORIGINS_REGISTRY);
-	}
-
-	@SubscribeEvent
 	public static void onAdvancement(AdvancementEvent event) {
 		Advancement advancement = event.getAdvancement();
 		Registry<Origin> originsRegistry = OriginsAPI.getOriginsRegistry();
-		IOriginContainer.get(event.getPlayer()).ifPresent(container -> container.getOrigins()
+		IOriginContainer.get(event.getEntity()).ifPresent(container -> container.getOrigins()
 				.forEach((layer, origin) -> originsRegistry.getHolder(origin).stream().flatMap(x -> x.get().getUpgrades().stream())
 						.filter(x -> Objects.equals(x.advancement(), advancement.getId())).findFirst()
 						.ifPresent(upgrade -> {
@@ -127,7 +109,7 @@ public class OriginsEventHandler {
 									container.setOrigin(layer, target.unwrapKey().get());
 									container.synchronize();
 									if (!upgrade.announcement().isBlank())
-										event.getPlayer().displayClientMessage(Component.translatable(upgrade.announcement()).withStyle(ChatFormatting.GOLD), false);
+										event.getEntity().displayClientMessage(Component.translatable(upgrade.announcement()).withStyle(ChatFormatting.GOLD), false);
 								}
 							} catch (IllegalArgumentException e) {
 								Origins.LOGGER.error("Could not perform Origins upgrade from {} to {}, as the upgrade origin did not exist!", origin.location(), upgrade.origin().unwrapKey().orElse(null));
@@ -155,7 +137,7 @@ public class OriginsEventHandler {
 
 	@SubscribeEvent
 	public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
-		if (event.getPlayer() instanceof ServerPlayer sp && !event.getPlayer().level.isClientSide())
+		if (event.getEntity() instanceof ServerPlayer sp && !event.getEntity().level.isClientSide())
 			Objects.requireNonNull(sp.getServer()).submitAsync(() -> IOriginContainer.get(sp).ifPresent(container -> {
 				if (!container.hasAllOrigins()) {
 					container.checkAutoChoosingLayers(true);
@@ -171,7 +153,7 @@ public class OriginsEventHandler {
 
 	@SubscribeEvent
 	public static void onStartTracking(PlayerEvent.StartTracking event) {
-		if (event.getTarget() instanceof Player target && event.getPlayer() instanceof ServerPlayer sp && !event.getPlayer().level.isClientSide())
+		if (event.getTarget() instanceof Player target && event.getEntity() instanceof ServerPlayer sp && !event.getEntity().level.isClientSide())
 			Objects.requireNonNull(sp.getServer()).submitAsync(() -> IOriginContainer.get(target).ifPresent(x -> OriginsCommon.CHANNEL.send(PacketDistributor.PLAYER.with(() -> sp), x.getSynchronizationPacket())));
 	}
 
@@ -180,7 +162,7 @@ public class OriginsEventHandler {
 		event.getOriginal().reviveCaps(); // Reload capabilities.
 
 		LazyOptional<IOriginContainer> original = IOriginContainer.get(event.getOriginal());
-		LazyOptional<IOriginContainer> player = IOriginContainer.get(event.getPlayer());
+		LazyOptional<IOriginContainer> player = IOriginContainer.get(event.getEntity());
 		if (original.isPresent() != player.isPresent()) {
 			Apoli.LOGGER.info("Capability mismatch: original:{}, new:{}", original.isPresent(), player.isPresent());
 		}

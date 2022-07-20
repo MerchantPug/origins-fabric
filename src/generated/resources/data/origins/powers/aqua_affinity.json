@@ -1,49 +1,52 @@
 {
+  "type": "apoli:multiple",
   "underwater": {
-    "modifier": {
-      "name": "Unnamed attribute modifier",
-      "value": 4.0,
-      "operation": "multiply_total"
-    },
+    "type": "apoli:modify_break_speed",
+    "block_condition": "apoli:allow",
     "condition": {
+      "type": "apoli:and",
       "conditions": [
         {
-          "fluid": "minecraft:water",
-          "type": "apoli:submerged_in"
+          "type": "apoli:submerged_in",
+          "fluid": "minecraft:water"
         },
         {
-          "comparison": "==",
+          "type": "apoli:enchantment",
           "compare_to": 0,
-          "enchantment": "minecraft:aqua_affinity",
-          "type": "apoli:enchantment"
+          "comparison": "==",
+          "enchantment": "minecraft:aqua_affinity"
         }
-      ],
-      "type": "apoli:and"
+      ]
     },
-    "type": "apoli:modify_break_speed"
+    "modifier": {
+      "name": "Unnamed attribute modifier",
+      "operation": "multiply_total",
+      "value": 4.0
+    }
   },
   "ungrounded": {
-    "modifier": {
-      "name": "Unnamed attribute modifier",
-      "value": 4.0,
-      "operation": "multiply_total"
-    },
+    "type": "apoli:modify_break_speed",
+    "block_condition": "apoli:allow",
     "condition": {
+      "type": "apoli:and",
       "conditions": [
         {
-          "comparison": ">",
+          "type": "apoli:fluid_height",
           "compare_to": 0.0,
-          "fluid": "minecraft:water",
-          "type": "apoli:fluid_height"
+          "comparison": ">",
+          "fluid": "minecraft:water"
         },
         {
-          "inverted": true,
-          "type": "apoli:on_block"
+          "type": "apoli:on_block",
+          "block_condition": "apoli:allow",
+          "inverted": true
         }
-      ],
-      "type": "apoli:and"
+      ]
     },
-    "type": "apoli:modify_break_speed"
-  },
-  "type": "apoli:multiple"
+    "modifier": {
+      "name": "Unnamed attribute modifier",
+      "operation": "multiply_total",
+      "value": 4.0
+    }
+  }
 }

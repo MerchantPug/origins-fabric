@@ -2,6 +2,7 @@ package io.github.edwinmindcraft.origins.data.generator;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import io.github.apace100.apoli.util.AttributedEntityAttributeModifier;
 import io.github.apace100.apoli.util.Comparison;
 import io.github.apace100.origins.Origins;
 import io.github.apace100.origins.power.OriginsPowerTypes;
@@ -13,7 +14,10 @@ import io.github.edwinmindcraft.apoli.api.power.PowerData;
 import io.github.edwinmindcraft.apoli.api.power.configuration.ConfiguredBlockCondition;
 import io.github.edwinmindcraft.apoli.api.power.configuration.ConfiguredItemCondition;
 import io.github.edwinmindcraft.apoli.api.power.configuration.ConfiguredPower;
+import io.github.edwinmindcraft.apoli.api.power.configuration.power.TogglePowerConfiguration;
 import io.github.edwinmindcraft.apoli.api.registry.ApoliBuiltinRegistries;
+import io.github.edwinmindcraft.apoli.common.action.configuration.GiveConfiguration;
+import io.github.edwinmindcraft.apoli.common.action.configuration.PlaySoundConfiguration;
 import io.github.edwinmindcraft.apoli.common.condition.configuration.EnchantmentConfiguration;
 import io.github.edwinmindcraft.apoli.common.condition.configuration.FluidTagComparisonConfiguration;
 import io.github.edwinmindcraft.apoli.common.condition.meta.ConditionStreamConfiguration;
@@ -21,6 +25,7 @@ import io.github.edwinmindcraft.apoli.common.power.configuration.*;
 import io.github.edwinmindcraft.apoli.common.registry.ApoliPowers;
 import io.github.edwinmindcraft.apoli.common.registry.action.ApoliDefaultActions;
 import io.github.edwinmindcraft.apoli.common.registry.action.ApoliEntityActions;
+import io.github.edwinmindcraft.apoli.common.registry.condition.ApoliBlockConditions;
 import io.github.edwinmindcraft.apoli.common.registry.condition.ApoliDefaultConditions;
 import io.github.edwinmindcraft.apoli.common.registry.condition.ApoliEntityConditions;
 import io.github.edwinmindcraft.apoli.common.registry.condition.ApoliItemConditions;
@@ -31,12 +36,18 @@ import io.github.edwinmindcraft.origins.data.tag.OriginsItemTags;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderSet;
 import net.minecraft.data.DataGenerator;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.tags.FluidTags;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.MobType;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.enchantment.Enchantments;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.data.ExistingFileHelper;
 
 import java.util.Map;
@@ -104,8 +115,61 @@ public class OriginsPowerProvider extends PowerGenerator {
 		return builder.build();
 	}*/
 
+	private void makeArachnidPowers() {
+		PowerData hidden = PowerData.builder().hidden().build();
+
+		ConfiguredItemCondition<?, ?> carnivore = ApoliItemConditions.and(
+				ApoliItemConditions.OR.get().configure(ConditionStreamConfiguration.or(ImmutableList.of(HolderSet.direct(Holder::direct, ImmutableList.of(ApoliItemConditions.INGREDIENT.get().configure(FieldConfiguration.of(Ingredient.of(OriginsItemTags.MEAT))), ApoliItemConditions.MEAT.get().configure(NoConfiguration.INSTANCE)))), ApoliItemConditions.PREDICATE), new ConditionData(true)),
+				ApoliItemConditions.FOOD.get().configure(NoConfiguration.INSTANCE),
+				ApoliItemConditions.INGREDIENT.get().configure(FieldConfiguration.of(Ingredient.of(OriginsItemTags.IGNORE_DIET)), new ConditionData(true)));
+
+		this.add("arthropod", ApoliPowers.ENTITY_GROUP.get().configure(FieldConfiguration.of(MobType.ARTHROPOD), hidden));
+		this.add("carnivore", ApoliPowers.PREVENT_ITEM_USAGE.get().configure(FieldConfiguration.of(Optional.of(carnivore)), PowerData.DEFAULT));
+		this.add("climbing", ApoliPowers.multiple(
+				ImmutableMap.of(
+						"toggle", ApoliPowers.TOGGLE.get().configure(new TogglePowerConfiguration.Impl(true, IActivePower.Key.PRIMARY, false), PowerData.DEFAULT),
+						"climbing", ApoliPowers.CLIMBING.get().configure(new ClimbingConfiguration(true, Holder.direct(ApoliEntityConditions.or(
+								ApoliEntityConditions.BLOCK_COLLISION.get().configure(FieldConfiguration.of(new Vec3(-0.01, 0, -0.01))),
+								ApoliEntityConditions.BLOCK_COLLISION.get().configure(FieldConfiguration.of(new Vec3(0.01, 0, 0.01)))
+						))), PowerData.builder().addCondition(ApoliEntityConditions.and(
+								ApoliEntityConditions.POWER_ACTIVE.get().configure(new PowerReference(Origins.identifier("climbing_toggle"))),
+								ApoliEntityConditions.COLLIDED_HORIZONTALLY.get().configure(NoConfiguration.INSTANCE)
+						)).build()))));
+		//this.add("master_of_webs", ApoliPowers.MULTIPLE.get().configure(new MultipleConfiguration<>(makeMasterOfWebs()), PowerData.DEFAULT));
+		this.add("fragile", ApoliPowers.ATTRIBUTE.get().configure(new AttributeConfiguration(new AttributedEntityAttributeModifier(Attributes.MAX_HEALTH, new AttributeModifier("Fragile health reduction", -6.0, AttributeModifier.Operation.ADDITION))), PowerData.DEFAULT));
+	}
+
+	private void makeAvianPowers() {
+		ConfiguredItemCondition<?, ?> vegetarian = ApoliItemConditions.and(
+				ApoliItemConditions.OR.get().configure(ConditionStreamConfiguration.or(ImmutableList.of(HolderSet.direct(Holder::direct, ImmutableList.of(ApoliItemConditions.INGREDIENT.get().configure(FieldConfiguration.of(Ingredient.of(OriginsItemTags.MEAT))), ApoliItemConditions.MEAT.get().configure(NoConfiguration.INSTANCE)))), ApoliItemConditions.PREDICATE)),
+				ApoliItemConditions.FOOD.get().configure(NoConfiguration.INSTANCE),
+				ApoliItemConditions.INGREDIENT.get().configure(FieldConfiguration.of(Ingredient.of(OriginsItemTags.IGNORE_DIET)), new ConditionData(true)));
+		this.add("vegetarian", ApoliPowers.PREVENT_ITEM_USAGE.get().configure(FieldConfiguration.of(Optional.of(vegetarian)), PowerData.DEFAULT));
+		this.add("tailwind", ApoliPowers.ATTRIBUTE.get().configure(new AttributeConfiguration(new AttributedEntityAttributeModifier(Attributes.MOVEMENT_SPEED, new AttributeModifier("Tailwind speed bonus", 0.2, AttributeModifier.Operation.MULTIPLY_BASE))), PowerData.DEFAULT));
+		this.add("lay_eggs", ApoliPowers.ACTION_ON_WAKE_UP.get().configure(new ActionOnWakeUpConfiguration(null,
+				ApoliEntityActions.and(
+						ApoliEntityActions.GIVE.get().configure(new GiveConfiguration(new ItemStack(Items.EGG, 1))),
+						ApoliEntityActions.PLAY_SOUND.get().configure(new PlaySoundConfiguration(SoundEvents.CHICKEN_EGG, 1.0F, 1.0F))
+				), null), PowerData.DEFAULT));
+		this.add("slow_falling", ApoliPowers.MODIFY_FALLING.get().configure(new ModifyFallingConfiguration(0.01, false),
+				PowerData.builder().addCondition(ApoliEntityConditions.or(
+						ApoliEntityConditions.and(ApoliEntityConditions.SNEAKING.get().configure(NoConfiguration.INSTANCE), ApoliEntityConditions.FALL_FLYING.get().configure(NoConfiguration.INSTANCE)),
+						ApoliEntityConditions.and(ApoliEntityConditions.SNEAKING.get().configure(NoConfiguration.INSTANCE, new ConditionData(true)), ApoliEntityConditions.FALL_FLYING.get().configure(NoConfiguration.INSTANCE, new ConditionData(true)))
+				)).build()));
+		this.add("like_air", ApoliPowers.ATTRIBUTE_MODIFY_TRANSFER.get().configure(new AttributeModifyTransferConfiguration(ApoliPowers.MODIFY_AIR_SPEED.get(), Attributes.MOVEMENT_SPEED, 1.0), PowerData.DEFAULT));
+		this.add("fresh_air", ApoliPowers.PREVENT_SLEEP.get().configure(new PreventSleepConfiguration(
+				Holder.direct(ApoliBlockConditions.HEIGHT.get().configure(new IntegerComparisonConfiguration(Comparison.LESS_THAN, 86))),
+				"origins.avian_sleep_fail",
+				false
+		), PowerData.DEFAULT));
+	}
+
 	@Override
 	protected void populate() {
+		this.makeArachnidPowers();
+		this.makeAvianPowers();
+
+
 		PowerData hidden = PowerData.builder().hidden().build();
 		ConditionData inverted = new ConditionData(true);
 		this.add("like_water", OriginsPowerTypes.LIKE_WATER.get().configure(NoConfiguration.INSTANCE, PowerData.DEFAULT));
@@ -118,24 +182,25 @@ public class OriginsPowerProvider extends PowerGenerator {
 								.addCondition(ApoliEntityConditions.SUBMERGED_IN.get().configure(new TagConfiguration<>(FluidTags.WATER))).build())))),
 				PowerData.DEFAULT));
 		this.add("no_cobweb_slowdown", OriginsPowerTypes.NO_SLOWDOWN.get().configure(new NoSlowdownConfiguration(OriginsBlockTags.COBWEBS), hidden));
-		//this.add("master_of_webs", ApoliPowers.MULTIPLE.get().configure(new MultipleConfiguration<>(makeMasterOfWebs()), PowerData.DEFAULT));
 		this.add("conduit_power_on_land", OriginsPowerTypes.CONDUIT_POWER_ON_LAND.get().configure(NoConfiguration.INSTANCE, hidden));
-
 
 		this.add("aerial_combatant", ApoliPowers.MODIFY_DAMAGE_DEALT.get().configure(new ModifyDamageDealtConfiguration(new AttributeModifier("Extra damage while fall flying", 1, AttributeModifier.Operation.MULTIPLY_BASE)), PowerData.builder().addCondition(ApoliEntityConditions.FALL_FLYING.get().configure(NoConfiguration.INSTANCE)).build()));
 		this.add("air_from_potions", ApoliPowers.ACTION_ON_ITEM_USE.get().configure(new ActionOnItemUseConfiguration(Holder.direct(ApoliItemConditions.INGREDIENT.get().configure(FieldConfiguration.of(Ingredient.of(Items.POTION)))), Holder.direct(ApoliEntityActions.GAIN_AIR.get().configure(FieldConfiguration.of(60))), ApoliDefaultActions.ITEM_DEFAULT.getHolder().orElseThrow(RuntimeException::new)), hidden));
 		this.add("aqua_affinity", ApoliPowers.MULTIPLE.get().configure(new MultipleConfiguration<>(makeAquaAffinity()), PowerData.DEFAULT));
 		this.add("aquatic", ApoliPowers.ENTITY_GROUP.get().configure(FieldConfiguration.of(MobType.WATER), hidden));
 		this.add("arcane_skin", ApoliPowers.MODEL_COLOR.get().configure(new ColorConfiguration(0.5F, 0.5F, 1.0F, 0.7F), PowerData.DEFAULT));
-		this.add("arthropod", ApoliPowers.ENTITY_GROUP.get().configure(FieldConfiguration.of(MobType.ARTHROPOD), hidden));
+
 
 		this.add("burn_in_daylight", ApoliPowers.BURN.get().configure(new BurnConfiguration(20, 6), PowerData.builder().addCondition(ApoliEntityConditions.and(ApoliEntityConditions.EXPOSED_TO_SUN.get().configure(NoConfiguration.INSTANCE), ApoliEntityConditions.INVISIBLE.get().configure(NoConfiguration.INSTANCE, inverted))).build()));
-		this.add("burning_wrath", ApoliPowers.MODIFY_DAMAGE_DEALT.get().configure(new ModifyDamageDealtConfiguration(new AttributeModifier("Additional damage while on fire", 3, AttributeModifier.Operation.ADDITION)), PowerData.builder().addCondition(ApoliEntityConditions.ON_FIRE.get().configure(NoConfiguration.INSTANCE)).build()));
-		ConfiguredItemCondition<?, ?> carnivore = ApoliItemConditions.and(
-				ApoliItemConditions.OR.get().configure(ConditionStreamConfiguration.or(ImmutableList.of(HolderSet.direct(Holder::direct, ImmutableList.of(ApoliItemConditions.INGREDIENT.get().configure(FieldConfiguration.of(Ingredient.of(OriginsItemTags.MEAT))), ApoliItemConditions.MEAT.get().configure(NoConfiguration.INSTANCE)))), ApoliItemConditions.PREDICATE), inverted),
-				ApoliItemConditions.FOOD.get().configure(NoConfiguration.INSTANCE),
-				ApoliItemConditions.INGREDIENT.get().configure(FieldConfiguration.of(Ingredient.of(OriginsItemTags.IGNORE_DIET)), inverted));
-		this.add("carnivore", ApoliPowers.PREVENT_ITEM_USAGE.get().configure(FieldConfiguration.of(Optional.of(carnivore)), PowerData.DEFAULT));
+		this.add("burning_wrath", ApoliPowers.MODIFY_DAMAGE_DEALT.get().configure(
+				new ModifyDamageDealtConfiguration(new AttributeModifier("Additional damage while on fire", 3, AttributeModifier.Operation.ADDITION)),
+				PowerData.builder().addCondition(ApoliEntityConditions.ON_FIRE.get().configure(NoConfiguration.INSTANCE)).build()));
 		this.add("cat_vision", ApoliPowers.NIGHT_VISION.get().configure(FieldConfiguration.of(0.4F), PowerData.builder().addCondition(ApoliEntityConditions.SUBMERGED_IN.get().configure(new TagConfiguration<>(FluidTags.WATER), inverted)).build()));
+		this.add("claustrophobia", ApoliPowers.STACKING_STATUS_EFFECT.get().configure(
+				new StackingStatusEffectConfiguration(ListConfiguration.of(
+						new MobEffectInstance(MobEffects.WEAKNESS, 100, 0, true, false, true),
+						new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 100, 0, true, false, true)),
+						-20, 361, 10), PowerData.builder().addCondition(ApoliEntityConditions.BLOCK_COLLISION.get().configure(new FieldConfiguration<>(new Vec3(0, 1, 0)))).build())
+		);
 	}
 }
