@@ -1,27 +1,40 @@
 package io.github.edwinmindcraft.origins.api.data;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Streams;
 import com.google.gson.*;
-import io.github.apace100.origins.Origins;
+import com.mojang.datafixers.util.Pair;
+import com.mojang.serialization.DataResult;
+import com.mojang.serialization.JsonOps;
 import io.github.apace100.origins.data.CompatibilityDataTypes;
 import io.github.apace100.origins.origin.Impact;
+import io.github.edwinmindcraft.apoli.api.ApoliAPI;
+import io.github.edwinmindcraft.apoli.api.power.configuration.ConfiguredPower;
+import io.github.edwinmindcraft.apoli.api.registry.ApoliDynamicRegistries;
 import io.github.edwinmindcraft.origins.api.origin.Origin;
 import io.github.edwinmindcraft.origins.api.origin.OriginUpgrade;
 import io.github.edwinmindcraft.origins.api.util.JsonUtils;
+import net.minecraft.core.HolderSet;
+import net.minecraft.core.Registry;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.server.ServerLifecycleHooks;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.json.stream.JsonGenerationException;
 import java.lang.reflect.Type;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
-public record PartialOrigin(@NotNull Set<ResourceLocation> powers,
+public record PartialOrigin(@NotNull List<HolderSet<ConfiguredPower<?, ?>>> powers,
 							@Nullable ItemStack icon, @Nullable Boolean unchoosable,
 							@Nullable Integer order,
 							@Nullable Impact impact, @Nullable String name,
@@ -48,7 +61,8 @@ public record PartialOrigin(@NotNull Set<ResourceLocation> powers,
 		public PartialOrigin deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
 			JsonObject root = GsonHelper.convertToJsonObject(json, "root element");
 			Builder builder = builder();
-			builder.powers(JsonUtils.getIdentifierList(root, "powers"));
+			if (root.has("powers"))
+				builder.powers(root.getAsJsonArray("powers"));
 			if (root.has("icon")) {
 				JsonElement icon = root.get("icon");
 				ItemStack read = CompatibilityDataTypes.ITEM_OR_ITEM_STACK.read(icon);
@@ -71,7 +85,10 @@ public record PartialOrigin(@NotNull Set<ResourceLocation> powers,
 		@Override
 		public JsonElement serialize(PartialOrigin src, Type typeOfSrc, JsonSerializationContext context) {
 			JsonObject root = new JsonObject();
-			root.add("powers", src.powers().stream().map(ResourceLocation::toString).map(JsonPrimitive::new).collect(JsonUtils.toJsonArray()));
+			DataResult<JsonElement> powers = ConfiguredPower.CODEC_SET.set().encodeStart(JsonOps.INSTANCE, src.powers());
+			if (powers.result().isEmpty())
+				throw new JsonGenerationException("Failed to generate power list: " + powers.error().orElseThrow().message());
+			root.add("powers", powers.result().get());
 			if (src.icon() != null) root.add("icon", CompatibilityDataTypes.ITEM_OR_ITEM_STACK.write(src.icon()));
 			if (src.unchoosable() != null) root.addProperty("unchoosable", src.unchoosable());
 			if (src.order() != null) root.addProperty("order", src.order());
@@ -88,7 +105,7 @@ public record PartialOrigin(@NotNull Set<ResourceLocation> powers,
 
 	public static final class Builder {
 
-		private final ImmutableSet.Builder<ResourceLocation> powers = ImmutableSet.builder();
+		private final ImmutableList.Builder<HolderSet<ConfiguredPower<?, ?>>> powers = ImmutableList.builder();
 		private final ImmutableSet.Builder<OriginUpgrade> upgrades = ImmutableSet.builder();
 
 		private ItemStack icon;
@@ -102,16 +119,25 @@ public record PartialOrigin(@NotNull Set<ResourceLocation> powers,
 		private Builder() {}
 
 		@Contract("_ -> this")
+		public Builder powers(JsonArray powers) throws JsonParseException {
+			DataResult<Pair<List<HolderSet<ConfiguredPower<?, ?>>>, JsonElement>> decode = ConfiguredPower.CODEC_SET.set().decode(JsonOps.INSTANCE, powers);
+			if (decode.result().isEmpty())
+				throw new JsonParseException("Failed to deserialize powers: " + decode.error().orElseThrow().message());
+			this.powers.addAll(decode.result().get().getFirst());
+			return this;
+		}
+
+		@Contract("_ -> this")
 		public Builder powers(Iterable<ResourceLocation> powers) {
-			Origins.LOGGER.info("Found powers [{}]", String.join(",", Streams.stream(powers).map(ResourceLocation::toString).collect(Collectors.toSet())));
-			this.powers.addAll(powers);
+			Registry<ConfiguredPower<?, ?>> registry = ApoliAPI.getPowers(ServerLifecycleHooks.getCurrentServer() != null ? ServerLifecycleHooks.getCurrentServer().registryAccess() : RegistryAccess.BUILTIN.get());
+			List<ResourceKey<ConfiguredPower<?, ?>>> keys = Streams.stream(powers).map(loc -> ResourceKey.create(ApoliDynamicRegistries.CONFIGURED_POWER_KEY, loc)).toList();
+			this.powers.add(HolderSet.direct(registry::getOrCreateHolderOrThrow, keys));
 			return this;
 		}
 
 		@Contract("_ -> this")
 		public Builder powers(ResourceLocation... powers) {
-			this.powers.add(powers);
-			return this;
+			return this.powers(Arrays.asList(powers));
 		}
 
 		@Contract("_ -> this")

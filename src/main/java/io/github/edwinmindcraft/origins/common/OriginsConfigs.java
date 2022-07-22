@@ -2,13 +2,19 @@ package io.github.edwinmindcraft.origins.common;
 
 import com.electronwill.nightconfig.core.Config;
 import com.google.common.collect.ImmutableList;
+import io.github.edwinmindcraft.apoli.api.power.configuration.ConfiguredPower;
+import io.github.edwinmindcraft.apoli.api.registry.ApoliDynamicRegistries;
 import io.github.edwinmindcraft.calio.api.registry.ICalioDynamicRegistryManager;
 import io.github.edwinmindcraft.origins.api.origin.Origin;
 import io.github.edwinmindcraft.origins.api.registry.OriginsDynamicRegistries;
+import net.minecraft.core.Holder;
 import net.minecraft.core.WritableRegistry;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.common.ForgeConfigSpec;
 import org.apache.commons.lang3.tuple.Pair;
+
+import java.util.Optional;
 
 public class OriginsConfigs {
 	public static class Server {
@@ -39,14 +45,16 @@ public class OriginsConfigs {
 		public boolean updateOriginList(ICalioDynamicRegistryManager registryManager, Iterable<Origin> origins) {
 			boolean changed = false;
 			WritableRegistry<Origin> registry = registryManager.get(OriginsDynamicRegistries.ORIGINS_REGISTRY);
+			WritableRegistry<ConfiguredPower<?, ?>> powers = registryManager.get(ApoliDynamicRegistries.CONFIGURED_POWER_KEY);
 			for (Origin origin : origins) {
 				ResourceLocation registryName = registry.getKey(origin);
 				if (origin.isSpecial() || registryName == null) //Ignore special origins
 					continue;
 				if (this.origins.get().add(ImmutableList.of(registryName.toString(), "enabled"), true))
 					changed = true;
-				for (ResourceLocation power : origin.getPowers()) {
-					if (this.origins.get().add(ImmutableList.of(registryName.toString(), power.toString()), true)) {
+				for (Holder<ConfiguredPower<?, ?>> holder : origin.getValidPowers().toList()) {
+					Optional<ResourceKey<ConfiguredPower<?, ?>>> key = holder.unwrap().map(Optional::of, powers::getResourceKey);
+					if (key.isPresent() && this.origins.get().add(ImmutableList.of(registryName.toString(), key.get().location().toString()), true)) {
 						changed = true;
 					}
 				}

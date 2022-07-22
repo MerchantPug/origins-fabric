@@ -1,6 +1,8 @@
 package io.github.edwinmindcraft.origins.api.origin;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -16,22 +18,23 @@ import io.github.edwinmindcraft.calio.api.registry.ICalioDynamicRegistryManager;
 import io.github.edwinmindcraft.origins.api.registry.OriginsBuiltinRegistries;
 import io.github.edwinmindcraft.origins.api.registry.OriginsDynamicRegistries;
 import net.minecraft.core.Holder;
+import net.minecraft.core.HolderSet;
 import net.minecraft.core.Registry;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.registries.ObjectHolder;
 
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Stream;
 
 public class Origin {
 	@ObjectHolder(value = "origins:empty", registryName = "origins:origins")
 	public static final Origin EMPTY = new Origin(ImmutableSet.of(), ItemStack.EMPTY, true, -1, Impact.NONE, Component.literal(""), Component.literal(""), ImmutableSet.of(), true);
 
-	private final Set<ResourceLocation> powers;
+	private final List<HolderSet<ConfiguredPower<?, ?>>> powers;
 	private final ItemStack icon;
 	private final boolean unchoosable;
 	private final int order;
@@ -44,7 +47,7 @@ public class Origin {
 	public static final Codec<Holder<Origin>> HOLDER_REFERENCE = CalioCodecHelper.holderRef(OriginsDynamicRegistries.ORIGINS_REGISTRY, SerializableDataTypes.IDENTIFIER);
 
 	public static final Codec<Origin> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-			CalioCodecHelper.setOf(ResourceLocation.CODEC).fieldOf("powers").forGetter(Origin::getPowers),
+			ConfiguredPower.CODEC_SET.set().fieldOf("powers").forGetter(Origin::getPowers),
 			CalioCodecHelper.optionalField(ItemStack.CODEC, "icon", ItemStack.EMPTY).forGetter(Origin::getIcon),
 			CalioCodecHelper.optionalField(CalioCodecHelper.BOOL, "unchoosable", false).forGetter(Origin::isUnchoosable),
 			CalioCodecHelper.optionalField(CalioCodecHelper.INT, "order", Integer.MAX_VALUE).forGetter(Origin::getOrder),
@@ -61,9 +64,9 @@ public class Origin {
 		return CalioCodecHelper.registryDefaultedField(HOLDER_REFERENCE, name, OriginsDynamicRegistries.ORIGINS_REGISTRY, OriginsBuiltinRegistries.ORIGINS);
 	}
 
-	public Origin(Set<ResourceLocation> powers, ItemStack icon, boolean unchoosable, int order, Impact impact,
+	public Origin(Collection<HolderSet<ConfiguredPower<?, ?>>> powers, ItemStack icon, boolean unchoosable, int order, Impact impact,
 				  Component name, Component description, Set<OriginUpgrade> upgrades, boolean special) {
-		this.powers = ImmutableSet.copyOf(powers);
+		this.powers = ImmutableList.copyOf(powers);
 		this.icon = icon;
 		this.unchoosable = unchoosable;
 		this.order = order;
@@ -74,14 +77,29 @@ public class Origin {
 		this.special = special;
 	}
 
-	public Origin(Set<ResourceLocation> powers, ItemStack icon, boolean unchoosable, int order, Impact impact, Component name, Component description, Set<OriginUpgrade> upgrades) {
+	public Origin(Collection<HolderSet<ConfiguredPower<?, ?>>> powers, ItemStack icon, boolean unchoosable, int order, Impact impact, Component name, Component description, Set<OriginUpgrade> upgrades) {
 		this(powers, icon, unchoosable, order, impact, name, description, upgrades, false);
 	}
 
 	public Origin cleanup(ICalioDynamicRegistryManager manager) {
 		Registry<ConfiguredPower<?, ?>> powers = manager.get(ApoliDynamicRegistries.CONFIGURED_POWER_KEY);
+		ImmutableList.Builder<Holder<ConfiguredPower<?, ?>>> direct = ImmutableList.builder();
+		ImmutableList.Builder<HolderSet<ConfiguredPower<?, ?>>> sets = ImmutableList.builder();
+		for (HolderSet<ConfiguredPower<?, ?>> holderSet : this.getPowers()) {
+			Either<TagKey<ConfiguredPower<?, ?>>, List<Holder<ConfiguredPower<?, ?>>>> unwrap = holderSet.unwrap();
+			unwrap.ifLeft(tagKey -> powers.getTag(tagKey).ifPresent(x -> sets.add(holderSet)));
+			unwrap.ifRight(holders -> {
+				for (Holder<ConfiguredPower<?, ?>> holder : holders) {
+					if (holder.isBound())
+						direct.add(holder);
+				}
+			});
+		}
+		ImmutableList<Holder<ConfiguredPower<?, ?>>> build = direct.build();
+		if (build.size() > 0)
+			sets.add(HolderSet.direct(build));
 		return new Origin(
-				this.getPowers().stream().filter(powers::containsKey).collect(ImmutableSet.toImmutableSet()),
+				sets.build(),
 				this.getIcon(),
 				this.isUnchoosable(),
 				this.getOrder(),
@@ -92,8 +110,12 @@ public class Origin {
 				this.isSpecial());
 	}
 
-	public Set<ResourceLocation> getPowers() {
+	public List<HolderSet<ConfiguredPower<?, ?>>> getPowers() {
 		return this.powers;
+	}
+
+	public Stream<Holder<ConfiguredPower<?, ?>>> getValidPowers() {
+		return this.powers.stream().flatMap(HolderSet::stream).filter(Holder::isBound);
 	}
 
 	public ItemStack getIcon() {
@@ -144,7 +166,9 @@ public class Origin {
 				.map(ResourceKey::location).orElse(null);
 		StringBuilder builder = new StringBuilder("Origin(").append(name).append(")[");
 		boolean first = true;
-		for (ResourceLocation power : this.getPowers()) {
+		for (Holder<ConfiguredPower<?, ?>> power : this.getValidPowers().toList()) {
+			if (!power.isBound())
+				continue;
 			if (first)
 				first = false;
 			else

@@ -59,9 +59,8 @@ public class ViewOriginScreen extends OriginDisplayScreen {
 		if (this.originLayers.size() > 0) {
 			Tuple<Holder<OriginLayer>, Holder<Origin>> current = this.originLayers.get(this.currentLayer);
 			this.showOrigin(current.getB(), current.getA(), false);
-		} else {
-			this.showOrigin(OriginRegisters.EMPTY.getHolder().orElseThrow(), null, false);
-		}
+		} else
+			this.showNone();
 	}
 
 	@Override
@@ -113,8 +112,9 @@ public class ViewOriginScreen extends OriginDisplayScreen {
 
 	@Override
 	protected Component getTitleText() {
-		if (this.getCurrentLayer().title().view() != null)
-			return this.getCurrentLayer().title().view();
-		return Component.translatable(Origins.MODID + ".gui.view_origin.title", this.getCurrentLayer().name());
+		Component titleText = this.getCurrentLayer().get().title().view();
+		if (titleText != null)
+			return titleText;
+		return Component.translatable(Origins.MODID + ".gui.view_origin.title", this.getCurrentLayer().get().name());
 	}
 }

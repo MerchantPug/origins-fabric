@@ -1,6 +1,6 @@
 package io.github.edwinmindcraft.origins.common;
 
-import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableList;
 import io.github.apace100.apoli.Apoli;
 import io.github.apace100.apoli.mixin.EntityAccessor;
 import io.github.apace100.origins.Origins;
@@ -11,6 +11,7 @@ import io.github.apace100.origins.origin.OriginRegistry;
 import io.github.apace100.origins.power.OriginsPowerTypes;
 import io.github.apace100.origins.registry.ModDamageSources;
 import io.github.edwinmindcraft.apoli.api.component.IPowerContainer;
+import io.github.edwinmindcraft.apoli.api.power.configuration.ConfiguredPower;
 import io.github.edwinmindcraft.calio.api.event.CalioDynamicRegistryEvent;
 import io.github.edwinmindcraft.calio.api.event.DynamicRegistrationEvent;
 import io.github.edwinmindcraft.origins.api.OriginsAPI;
@@ -22,10 +23,11 @@ import io.github.edwinmindcraft.origins.common.network.S2COpenOriginScreen;
 import net.minecraft.ChatFormatting;
 import net.minecraft.advancements.Advancement;
 import net.minecraft.core.Holder;
+import net.minecraft.core.HolderSet;
 import net.minecraft.core.Registry;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffects;
@@ -51,6 +53,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashSet;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Mod.EventBusSubscriber(modid = Origins.MODID)
@@ -211,15 +215,19 @@ public class OriginsEventHandler {
 			event.withCancellationReason("Disabled by config").setCanceled(true);
 		else {
 			Origin original = event.getOriginal();
-			HashSet<ResourceLocation> powers = new HashSet<>(original.getPowers());
-			powers.removeIf(x -> !OriginsConfigs.COMMON.isPowerEnabled(event.getRegistryName(), x));
-			if (powers.size() != original.getPowers().size()) {
-				Origins.LOGGER.info("Powers [{}] were disabled by config for origin: {}", original.getPowers().stream()
+			Set<Holder<ConfiguredPower<?, ?>>> originalPowers = original.getPowers().stream().flatMap(HolderSet::stream).collect(Collectors.toUnmodifiableSet());
+			Set<Holder<ConfiguredPower<?, ?>>> powers = new HashSet<>(originalPowers);
+			powers.removeIf(x -> {
+				Optional<ResourceKey<ConfiguredPower<?, ?>>> key = x.unwrapKey();
+				return key.isEmpty() || !OriginsConfigs.COMMON.isPowerEnabled(event.getRegistryName(), key.get().location());
+			});
+			if (powers.size() != originalPowers.size()) {
+				Origins.LOGGER.info("Powers [{}] were disabled by config for origin: {}", originalPowers.stream()
 								.filter(x -> !powers.contains(x))
-								.map(ResourceLocation::toString)
+								.map(x -> x.unwrapKey().orElseThrow().location().toString())
 								.collect(Collectors.joining(",")),
 						event.getRegistryName());
-				event.setNewEntry(new Origin(ImmutableSet.copyOf(powers), original.getIcon(), original.isUnchoosable(),
+				event.setNewEntry(new Origin(ImmutableList.of(HolderSet.direct(ImmutableList.copyOf(powers))), original.getIcon(), original.isUnchoosable(),
 						original.getOrder(), original.getImpact(), original.getName(), original.getDescription(),
 						original.getUpgrades(), original.isSpecial()));
 			}

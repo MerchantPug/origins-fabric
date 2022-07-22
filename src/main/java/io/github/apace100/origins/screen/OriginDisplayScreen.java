@@ -9,6 +9,7 @@ import io.github.apace100.origins.mixin.ScreenAccessor;
 import io.github.apace100.origins.origin.Impact;
 import io.github.edwinmindcraft.apoli.api.ApoliAPI;
 import io.github.edwinmindcraft.apoli.api.power.configuration.ConfiguredPower;
+import io.github.edwinmindcraft.origins.api.OriginsAPI;
 import io.github.edwinmindcraft.origins.api.origin.Origin;
 import io.github.edwinmindcraft.origins.api.origin.OriginLayer;
 import net.minecraft.ChatFormatting;
@@ -20,6 +21,7 @@ import net.minecraft.core.Registry;
 import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.item.ItemStack;
@@ -28,13 +30,27 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 
 public class OriginDisplayScreen extends Screen {
 
 	private static final ResourceLocation WINDOW = new ResourceLocation(Origins.MODID, "textures/gui/choose_origin.png");
 
-	private Origin origin;
-	private OriginLayer layer;
+	//Yes, this is improper usage of that class, but that's what isBound is for.
+	@SuppressWarnings("ConstantConditions")
+	private static Holder<Origin> unboundOrigin() {
+		return Holder.Reference.createStandAlone(OriginsAPI.getOriginsRegistry(null), null);
+	}
+
+	@SuppressWarnings("ConstantConditions")
+	private static Holder<OriginLayer> unboundLayer() {
+		return Holder.Reference.createStandAlone(OriginsAPI.getLayersRegistry(null), null);
+	}
+
+	@NotNull
+	private Holder<Origin> origin = unboundOrigin();
+	@NotNull
+	private Holder<OriginLayer> layer = unboundLayer();
 	private boolean isOriginRandom;
 	private Component randomOriginText;
 
@@ -53,11 +69,16 @@ public class OriginDisplayScreen extends Screen {
 	public OriginDisplayScreen(Component title, boolean showDirtBackground) {
 		super(title);
 		this.showDirtBackground = showDirtBackground;
+		this.showNone();
+	}
+
+	public void showNone() {
+		this.showOrigin(unboundOrigin(), unboundLayer(), false);
 	}
 
 	public void showOrigin(Holder<Origin> origin, Holder<OriginLayer> layer, boolean isRandom) {
-		this.origin = origin != null ? origin.value() : null;
-		this.layer = layer != null ? layer.value() : null;
+		this.origin = origin;
+		this.layer = layer;
 		this.isOriginRandom = isRandom;
 		this.scrollPos = 0;
 		this.time = 0;
@@ -74,11 +95,13 @@ public class OriginDisplayScreen extends Screen {
 		this.guiTop = (this.height - windowHeight) / 2;
 	}
 
-	public Origin getCurrentOrigin() {
+	@NotNull
+	public Holder<Origin> getCurrentOrigin() {
 		return this.origin;
 	}
 
-	public OriginLayer getCurrentLayer() {
+	@NotNull
+	public Holder<OriginLayer> getCurrentLayer() {
 		return this.layer;
 	}
 
@@ -98,7 +121,7 @@ public class OriginDisplayScreen extends Screen {
 		this.renderBackground(matrices);
 		this.renderOriginWindow(matrices, mouseX, mouseY);
 		super.render(matrices, mouseX, mouseY, delta);
-		if (this.origin != null) {
+		if (this.origin.isBound()) {
 			this.renderScrollbar(matrices, mouseX, mouseY);
 			this.renderBadgeTooltip(matrices, mouseX, mouseY);
 		}
@@ -130,7 +153,7 @@ public class OriginDisplayScreen extends Screen {
 	private double mouseDragStart = 0;
 
 	private boolean canScroll() {
-		return this.origin != null && this.currentMaxScroll > 0;
+		return this.origin.isBound() && this.currentMaxScroll > 0;
 	}
 
 	@Override
@@ -190,12 +213,12 @@ public class OriginDisplayScreen extends Screen {
 	private void renderOriginWindow(PoseStack matrices, int mouseX, int mouseY) {
 		RenderSystem.enableBlend();
 		this.renderWindowBackground(matrices, 16, 0);
-		if (this.origin != null) {
+		if (this.origin.isBound()) {
 			this.renderOriginContent(matrices, mouseX, mouseY);
 		}
 		RenderSystem.setShaderTexture(0, WINDOW);
 		this.blit(matrices, this.guiLeft, this.guiTop, 0, 0, windowWidth, windowHeight);
-		if (this.origin != null) {
+		if (this.origin.isBound()) {
 			this.renderOriginName(matrices);
 			RenderSystem.setShaderTexture(0, WINDOW);
 			this.renderOriginImpact(matrices, mouseX, mouseY);
@@ -206,7 +229,7 @@ public class OriginDisplayScreen extends Screen {
 	}
 
 	private void renderOriginImpact(PoseStack matrices, int mouseX, int mouseY) {
-		Impact impact = this.getCurrentOrigin().getImpact();
+		Impact impact = this.getCurrentOrigin().get().getImpact();
 		int impactValue = impact.getImpactValue();
 		int wOffset = impactValue * 8;
 		for (int i = 0; i < 3; i++) {
@@ -224,9 +247,9 @@ public class OriginDisplayScreen extends Screen {
 	}
 
 	private void renderOriginName(PoseStack matrices) {
-		FormattedText originName = this.font.substrByWidth(this.getCurrentOrigin().getName(), windowWidth - 36);
+		FormattedText originName = this.font.substrByWidth(this.getCurrentOrigin().get().getName(), windowWidth - 36);
 		drawString(matrices, this.font, originName.getString(), this.guiLeft + 39, this.guiTop + 19, 0xFFFFFF);
-		ItemStack is = this.getCurrentOrigin().getIcon();
+		ItemStack is = this.getCurrentOrigin().get().getIcon();
 		this.itemRenderer.renderGuiItem(is, this.guiLeft + 15, this.guiTop + 15);
 	}
 
@@ -251,7 +274,6 @@ public class OriginDisplayScreen extends Screen {
 	}
 
 	private void renderOriginContent(PoseStack matrices, int mouseX, int mouseY) {
-
 		int textWidth = windowWidth - 48;
 		// Without this code, the text may not cover the whole width of the window
 		// if the scrollbar isn't shown. However, with this code, you'll see 1 frame
@@ -261,7 +283,7 @@ public class OriginDisplayScreen extends Screen {
             textWidth += 12;
         }*/
 
-		Origin origin = this.getCurrentOrigin();
+		Origin origin = this.getCurrentOrigin().get();
 		int x = this.guiLeft + 18;
 		int y = this.guiTop + 50;
 		int startY = y;
@@ -288,18 +310,20 @@ public class OriginDisplayScreen extends Screen {
 			y += 14;
 		} else {
 			Registry<ConfiguredPower<?, ?>> powers = ApoliAPI.getPowers();
-			for (ResourceLocation id : origin.getPowers()) {
-				ConfiguredPower<?, ?> p = powers.get(id);
-				if (p == null || p.getData().hidden()) {
+			for (Holder<ConfiguredPower<?, ?>> holder : origin.getValidPowers().toList()) {
+				if (!holder.isBound() || holder.get().getData().hidden())
 					continue;
-				}
+				Optional<ResourceLocation> id = holder.unwrap().map(Optional::of, powers::getResourceKey).map(ResourceKey::location);
+				if (id.isEmpty())
+					continue;
+				ConfiguredPower<?, ?> p = holder.get();
 				FormattedCharSequence name = Language.getInstance().getVisualOrder(this.font.substrByWidth(p.getData().getName().withStyle(ChatFormatting.UNDERLINE), textWidth));
 				Component desc = p.getData().getDescription();
 				List<FormattedCharSequence> drawLines = this.font.split(desc, textWidth);
 				if (y >= startY - 24 && y <= endY + 12) {
 					this.font.draw(matrices, name, x, y, 0xFFFFFF);
 					int tw = this.font.width(name);
-					Collection<Badge> badges = BadgeManager.getPowerBadges(id);
+					Collection<Badge> badges = BadgeManager.getPowerBadges(id.get());
 					int xStart = x + tw + 4;
 					int bi = 0;
 					for (Badge badge : badges) {

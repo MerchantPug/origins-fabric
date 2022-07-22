@@ -15,6 +15,7 @@ import net.minecraftforge.common.capabilities.CapabilityManager;
 import net.minecraftforge.common.capabilities.CapabilityToken;
 import org.apache.commons.lang3.Validate;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Optional;
@@ -27,7 +28,7 @@ public class OriginsAPI {
 	public static final Capability<IOriginContainer> ORIGIN_CONTAINER = CapabilityManager.get(new CapabilityToken<>() {});
 
 	@Contract(pure = true)
-	public static Registry<Origin> getOriginsRegistry(MinecraftServer server) {
+	public static Registry<Origin> getOriginsRegistry(@Nullable MinecraftServer server) {
 		return CalioAPI.getDynamicRegistries(server).get(OriginsDynamicRegistries.ORIGINS_REGISTRY);
 	}
 
@@ -37,7 +38,7 @@ public class OriginsAPI {
 	}
 
 	@Contract(pure = true)
-	public static Registry<OriginLayer> getLayersRegistry(MinecraftServer server) {
+	public static Registry<OriginLayer> getLayersRegistry(@Nullable MinecraftServer server) {
 		return CalioAPI.getDynamicRegistries(server).get(OriginsDynamicRegistries.LAYERS_REGISTRY);
 	}
 

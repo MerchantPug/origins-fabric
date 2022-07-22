@@ -24,10 +24,7 @@ import net.minecraft.world.item.Items;
 import net.minecraftforge.network.PacketDistributor;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 public class ChooseOriginScreen extends OriginDisplayScreen {
 
@@ -98,20 +95,26 @@ public class ChooseOriginScreen extends OriginDisplayScreen {
 			}));
 		}
 		this.addRenderableWidget(new Button(this.guiLeft + windowWidth / 2 - 50, this.guiTop + windowHeight + 5, 100, 20, Component.translatable(Origins.MODID + ".gui.select"), b -> {
-			ResourceLocation layer = this.layerList.get(this.currentLayerIndex).unwrapKey().map(ResourceKey::location).orElseThrow();
+			ResourceLocation layer = this.layerList.get(this.currentLayerIndex).unwrap().map(Optional::of, OriginsAPI.getLayersRegistry(null)::getResourceKey).map(ResourceKey::location).orElseThrow();
 			this.openNextLayerScreen();
 			if (this.currentOrigin == this.originSelection.size())
 				OriginsCommon.CHANNEL.send(PacketDistributor.SERVER.noArg(), new C2SChooseRandomOrigin(layer));
-			else
-				OriginsCommon.CHANNEL.send(PacketDistributor.SERVER.noArg(), new C2SChooseOrigin(layer, OriginsAPI.getOriginsRegistry().getKey(this.getCurrentOrigin())));
+			else {
+				Optional<ResourceKey<Origin>> key = this.getCurrentOrigin().unwrap().map(Optional::of, OriginsAPI.getOriginsRegistry(null)::getResourceKey);
+				if (key.isPresent())
+					OriginsCommon.CHANNEL.send(PacketDistributor.SERVER.noArg(), new C2SChooseOrigin(layer, key.get().location()));
+				else
+					Origins.LOGGER.error("Unregistered origin found for layer {}: {}", layer, this.getCurrentOrigin());
+			}
 		}));
 	}
 
 	@Override
 	protected Component getTitleText() {
-		if (this.getCurrentLayer().title().choose() != null)
-			return this.getCurrentLayer().title().choose();
-		return Component.translatable(Origins.MODID + ".gui.choose_origin.title", this.getCurrentLayer().name());
+		Component titleText = this.getCurrentLayer().get().title().choose();
+		if (titleText != null)
+			return titleText;
+		return Component.translatable(Origins.MODID + ".gui.choose_origin.title", this.getCurrentLayer().get().name());
 	}
 
 	private Holder<Origin> getCurrentOriginInternal() {

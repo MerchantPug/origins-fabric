@@ -9,7 +9,6 @@ import io.github.apace100.origins.util.ChoseOriginCriterion;
 import io.github.edwinmindcraft.apoli.api.ApoliAPI;
 import io.github.edwinmindcraft.apoli.api.component.IPowerContainer;
 import io.github.edwinmindcraft.apoli.api.power.configuration.ConfiguredPower;
-import io.github.edwinmindcraft.apoli.api.registry.ApoliDynamicRegistries;
 import io.github.edwinmindcraft.calio.api.registry.ICalioDynamicRegistryManager;
 import io.github.edwinmindcraft.origins.api.OriginsAPI;
 import io.github.edwinmindcraft.origins.api.capabilities.IOriginContainer;
@@ -22,6 +21,7 @@ import io.github.edwinmindcraft.origins.common.network.S2CSynchronizeOrigin;
 import io.github.edwinmindcraft.origins.common.registry.OriginRegisters;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
+import net.minecraft.core.HolderSet;
 import net.minecraft.core.Registry;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
@@ -90,11 +90,15 @@ public class OriginContainer implements IOriginContainer, ICapabilitySerializabl
 
 	private void grantPowers(IPowerContainer container, @NotNull ResourceKey<Origin> origin, Holder<Origin> holder) {
 		ResourceLocation powerSource = OriginsAPI.getPowerSource(origin);
-		Registry<ConfiguredPower<?, ?>> powers = ApoliAPI.getPowers();
-		for (ResourceLocation power : holder.value().getPowers()) {
-			ConfiguredPower<?, ?> configuredPower = powers.get(power);
-			if (configuredPower != null && !container.hasPower(power, powerSource))
-				container.addPower(power, powerSource);
+		Registry<ConfiguredPower<?, ?>> powers = ApoliAPI.getPowers(this.player.getServer());
+		for (HolderSet<ConfiguredPower<?, ?>> holderSet : holder.value().getPowers()) {
+			for (Holder<ConfiguredPower<?, ?>> power : holderSet) {
+				if (!power.isBound()) continue;
+				power.unwrap().map(Optional::of, powers::getResourceKey).ifPresent(powerKey -> {
+					if (!container.hasPower(powerKey, powerSource))
+						container.addPower(powerKey, powerSource);
+				});
+			}
 		}
 	}
 
@@ -171,13 +175,15 @@ public class OriginContainer implements IOriginContainer, ICapabilitySerializabl
 			Set<ResourceKey<ConfiguredPower<?, ?>>> currentPowers = ImmutableSet.copyOf(container.getPowersFromSource(powerSource));
 			Registry<ConfiguredPower<?, ?>> registry = ApoliAPI.getPowers(this.player.getServer());
 
-			Set<ResourceKey<ConfiguredPower<?, ?>>> newPowers = originsRegistry.getOrThrow(origin).getPowers().stream().flatMap(id -> {
-				ConfiguredPower<?, ?> x = registry.get(id);
-				if (x == null)
+			Set<ResourceKey<ConfiguredPower<?, ?>>> newPowers = originsRegistry.getOrThrow(origin).getValidPowers().flatMap(holder -> {
+				if (!holder.isBound())
+					return Stream.empty();
+				Optional<ResourceKey<ConfiguredPower<?, ?>>> key = holder.unwrap().map(Optional::of, registry::getResourceKey);
+				if (key.isEmpty())
 					return Stream.empty();
 				HashSet<ResourceKey<ConfiguredPower<?, ?>>> names = new HashSet<>();
-				names.add(ResourceKey.create(ApoliDynamicRegistries.CONFIGURED_POWER_KEY, id));
-				names.addAll(x.getChildrenKeys());
+				names.add(key.get());
+				names.addAll(holder.value().getChildrenKeys());
 				return names.stream();
 			}).collect(ImmutableSet.toImmutableSet());
 			Set<ResourceKey<ConfiguredPower<?, ?>>> toRemove = currentPowers.stream().filter(x -> !newPowers.contains(x)).collect(Collectors.toSet());
@@ -270,8 +276,8 @@ public class OriginContainer implements IOriginContainer, ICapabilitySerializabl
 
 	public void acceptSynchronization(Map<ResourceLocation, ResourceLocation> map, boolean hadAllOrigins) {
 		this.layers.clear();
-		Registry<OriginLayer> layers = OriginsAPI.getLayersRegistry();
-		Registry<Origin> origins = OriginsAPI.getOriginsRegistry();
+		Registry<OriginLayer> layers = OriginsAPI.getLayersRegistry(this.player.getServer());
+		Registry<Origin> origins = OriginsAPI.getOriginsRegistry(this.player.getServer());
 		for (Map.Entry<ResourceLocation, ResourceLocation> entry : map.entrySet()) {
 			ResourceKey<OriginLayer> layer = ResourceKey.create(OriginsDynamicRegistries.LAYERS_REGISTRY, entry.getKey());
 			ResourceKey<Origin> origin = ResourceKey.create(OriginsDynamicRegistries.ORIGINS_REGISTRY, entry.getValue());
@@ -285,8 +291,8 @@ public class OriginContainer implements IOriginContainer, ICapabilitySerializabl
 	public Tag serializeNBT() {
 		CompoundTag tag = new CompoundTag();
 		CompoundTag layers = new CompoundTag();
-		Registry<Origin> originsRegistry = OriginsAPI.getOriginsRegistry();
-		Registry<OriginLayer> layersRegistry = OriginsAPI.getLayersRegistry();
+		Registry<Origin> originsRegistry = OriginsAPI.getOriginsRegistry(this.player.getServer());
+		Registry<OriginLayer> layersRegistry = OriginsAPI.getLayersRegistry(this.player.getServer());
 		for (Map.Entry<ResourceKey<OriginLayer>, ResourceKey<Origin>> entry : this.getOrigins().entrySet()) {
 			if (!layersRegistry.containsKey(entry.getKey()) || !originsRegistry.containsKey(entry.getValue())) {
 				Origins.LOGGER.warn("Removed missing entry {}: {}", entry.getKey(), entry.getValue());
@@ -304,8 +310,8 @@ public class OriginContainer implements IOriginContainer, ICapabilitySerializabl
 		this.layers.clear();
 		CompoundTag tag = (CompoundTag) nbt;
 		CompoundTag layers = tag.getCompound("Origins");
-		Registry<OriginLayer> layersRegistry = OriginsAPI.getLayersRegistry();
-		Registry<Origin> originsRegistry = OriginsAPI.getOriginsRegistry();
+		Registry<OriginLayer> layersRegistry = OriginsAPI.getLayersRegistry(this.player.getServer());
+		Registry<Origin> originsRegistry = OriginsAPI.getOriginsRegistry(this.player.getServer());
 		for (String key : layers.getAllKeys()) {
 			String origin = layers.getString(key);
 			if (origin.isBlank())
