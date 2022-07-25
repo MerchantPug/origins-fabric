@@ -28,7 +28,6 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.json.stream.JsonGenerationException;
 import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.List;
@@ -87,7 +86,7 @@ public record PartialOrigin(@NotNull List<HolderSet<ConfiguredPower<?, ?>>> powe
 			JsonObject root = new JsonObject();
 			DataResult<JsonElement> powers = ConfiguredPower.CODEC_SET.set().encodeStart(JsonOps.INSTANCE, src.powers());
 			if (powers.result().isEmpty())
-				throw new JsonGenerationException("Failed to generate power list: " + powers.error().orElseThrow().message());
+				throw new IllegalArgumentException("Failed to generate power list: " + powers.error().orElseThrow().message());
 			root.add("powers", powers.result().get());
 			if (src.icon() != null) root.add("icon", CompatibilityDataTypes.ITEM_OR_ITEM_STACK.write(src.icon()));
 			if (src.unchoosable() != null) root.addProperty("unchoosable", src.unchoosable());
