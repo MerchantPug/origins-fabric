@@ -12,6 +12,6 @@ public class OriginsItemModelProvider extends ItemModelProvider {
 
 	@Override
 	protected void registerModels() {
-		this.singleTexture("orb_of_origin", this.mcLoc("generated"), this.modLoc("item/orb_of_origin"));
+		this.singleTexture("orb_of_origin", this.mcLoc("generated"), "layer0", this.modLoc("item/orb_of_origin"));
 	}
 }

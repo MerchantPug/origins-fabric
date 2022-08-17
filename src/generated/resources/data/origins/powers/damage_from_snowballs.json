@@ -1,0 +1,17 @@
+{
+  "type": "apoli:modify_damage_taken",
+  "attacker_action": "apoli:nothing",
+  "bientity_action": "apoli:nothing",
+  "bientity_condition": "apoli:allow",
+  "damage_condition": {
+    "type": "apoli:projectile",
+    "projectile": "minecraft:snowball"
+  },
+  "hidden": true,
+  "modifier": {
+    "name": "Snowball damage taken like Blazes",
+    "operation": "addition",
+    "value": 3.0
+  },
+  "self_action": "apoli:nothing"
+}

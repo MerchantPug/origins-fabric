@@ -6,16 +6,20 @@ import io.github.apace100.apoli.util.AttributedEntityAttributeModifier;
 import io.github.apace100.apoli.util.Comparison;
 import io.github.apace100.origins.Origins;
 import io.github.apace100.origins.power.OriginsPowerTypes;
+import io.github.apace100.origins.registry.ModDamageSources;
+import io.github.apace100.origins.registry.ModEnchantments;
 import io.github.edwinmindcraft.apoli.api.configuration.*;
 import io.github.edwinmindcraft.apoli.api.generator.PowerGenerator;
 import io.github.edwinmindcraft.apoli.api.power.ConditionData;
 import io.github.edwinmindcraft.apoli.api.power.IActivePower;
 import io.github.edwinmindcraft.apoli.api.power.PowerData;
 import io.github.edwinmindcraft.apoli.api.power.configuration.ConfiguredBlockCondition;
+import io.github.edwinmindcraft.apoli.api.power.configuration.ConfiguredEntityCondition;
 import io.github.edwinmindcraft.apoli.api.power.configuration.ConfiguredItemCondition;
 import io.github.edwinmindcraft.apoli.api.power.configuration.ConfiguredPower;
 import io.github.edwinmindcraft.apoli.api.power.configuration.power.TogglePowerConfiguration;
 import io.github.edwinmindcraft.apoli.api.registry.ApoliBuiltinRegistries;
+import io.github.edwinmindcraft.apoli.common.action.configuration.DamageConfiguration;
 import io.github.edwinmindcraft.apoli.common.action.configuration.GiveConfiguration;
 import io.github.edwinmindcraft.apoli.common.action.configuration.PlaySoundConfiguration;
 import io.github.edwinmindcraft.apoli.common.condition.configuration.EnchantmentConfiguration;
@@ -25,21 +29,22 @@ import io.github.edwinmindcraft.apoli.common.power.configuration.*;
 import io.github.edwinmindcraft.apoli.common.registry.ApoliPowers;
 import io.github.edwinmindcraft.apoli.common.registry.action.ApoliDefaultActions;
 import io.github.edwinmindcraft.apoli.common.registry.action.ApoliEntityActions;
-import io.github.edwinmindcraft.apoli.common.registry.condition.ApoliBlockConditions;
-import io.github.edwinmindcraft.apoli.common.registry.condition.ApoliDefaultConditions;
-import io.github.edwinmindcraft.apoli.common.registry.condition.ApoliEntityConditions;
-import io.github.edwinmindcraft.apoli.common.registry.condition.ApoliItemConditions;
+import io.github.edwinmindcraft.apoli.common.registry.condition.*;
 import io.github.edwinmindcraft.origins.common.power.configuration.NoSlowdownConfiguration;
 import io.github.edwinmindcraft.origins.common.power.configuration.WaterVisionConfiguration;
 import io.github.edwinmindcraft.origins.data.tag.OriginsBlockTags;
 import io.github.edwinmindcraft.origins.data.tag.OriginsItemTags;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderSet;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.data.DataGenerator;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.tags.FluidTags;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobType;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -47,6 +52,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.enchantment.Enchantments;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.data.ExistingFileHelper;
 
@@ -164,11 +170,48 @@ public class OriginsPowerProvider extends PowerGenerator {
 		), PowerData.DEFAULT));
 	}
 
+	private void makeBlazebornPowers() {
+		PowerData hidden = PowerData.builder().hidden().build();
+		this.add("burning_wrath", ApoliPowers.MODIFY_DAMAGE_DEALT.get().configure(
+				new ModifyDamageDealtConfiguration(new AttributeModifier("Additional damage while on fire", 3, AttributeModifier.Operation.ADDITION)),
+				PowerData.builder().addCondition(ApoliEntityConditions.ON_FIRE.get().configure(NoConfiguration.INSTANCE)).build()));
+		DamageSource waterDamage = new DamageSource("hurt_by_water").bypassArmor().bypassMagic();
+		this.add("damage_from_potions", ApoliPowers.ACTION_ON_ITEM_USE.get().configure(
+				new ActionOnItemUseConfiguration(
+						Holder.direct(ApoliItemConditions.INGREDIENT.get().configure(new FieldConfiguration<>(Ingredient.of(Items.POTION)))),
+						Holder.direct(ApoliEntityActions.DAMAGE.get().configure(new DamageConfiguration(waterDamage, 2.0F))),
+						ApoliDefaultActions.ITEM_DEFAULT.getHolder().orElseThrow()
+				), hidden
+		));
+		this.add("damage_from_snowballs", ApoliPowers.MODIFY_DAMAGE_TAKEN.get().configure(
+				new ModifyDamageTakenConfiguration(
+						ListConfiguration.of(new AttributeModifier("Snowball damage taken like Blazes", 3, AttributeModifier.Operation.ADDITION)),
+						Holder.direct(ApoliDamageConditions.PROJECTILE.get().configure(FieldConfiguration.of(Optional.of(EntityType.SNOWBALL)))),
+						ApoliDefaultConditions.BIENTITY_DEFAULT.getHolder().orElseThrow(),
+						ApoliDefaultActions.ENTITY_DEFAULT.getHolder().orElseThrow(),
+						ApoliDefaultActions.ENTITY_DEFAULT.getHolder().orElseThrow(),
+						ApoliDefaultActions.BIENTITY_DEFAULT.getHolder().orElseThrow()
+				), hidden
+		));
+		this.add("fire_immunity", ApoliPowers.INVULNERABILITY.get().configure(HolderConfiguration.of(Holder.direct(ApoliDamageConditions.FIRE.get().configure(NoConfiguration.INSTANCE))), PowerData.DEFAULT));
+		this.add("flame_particles", ApoliPowers.PARTICLE.get().configure(new ParticleConfiguration(ParticleTypes.FLAME, 4, false), hidden));
+		this.add("hotblooded", ApoliPowers.EFFECT_IMMUNITY.get().configure(ListConfiguration.of(MobEffects.POISON, MobEffects.HUNGER), PowerData.DEFAULT));
+		this.add("nether_spawn", ApoliPowers.MODIFY_PLAYER_SPAWN.get().configure(new ModifyPlayerSpawnConfiguration(Level.NETHER, 0.125F, null, "center", null, null), PowerData.DEFAULT));
+		this.add("water_vulnerability", ApoliPowers.DAMAGE_OVER_TIME.get().configure(
+				new DamageOverTimeConfiguration(20, 1, 1, 2, waterDamage, ModEnchantments.WATER_PROTECTION.get(), 1.0F),
+				PowerData.builder()
+						.addCondition(ApoliEntityConditions.or(
+								ApoliEntityConditions.FLUID_HEIGHT.get().configure(new FluidTagComparisonConfiguration(new DoubleComparisonConfiguration(Comparison.GREATER_THAN, 0.0), FluidTags.WATER)),
+								ApoliEntityConditions.IN_RAIN.get().configure(NoConfiguration.INSTANCE)
+						)).build()
+		));
+	}
+
 	@Override
 	protected void populate() {
 		this.makeArachnidPowers();
 		this.makeAvianPowers();
-
+		this.makeBlazebornPowers();
 
 		PowerData hidden = PowerData.builder().hidden().build();
 		ConditionData inverted = new ConditionData(true);
@@ -192,9 +235,6 @@ public class OriginsPowerProvider extends PowerGenerator {
 
 
 		this.add("burn_in_daylight", ApoliPowers.BURN.get().configure(new BurnConfiguration(20, 6), PowerData.builder().addCondition(ApoliEntityConditions.and(ApoliEntityConditions.EXPOSED_TO_SUN.get().configure(NoConfiguration.INSTANCE), ApoliEntityConditions.INVISIBLE.get().configure(NoConfiguration.INSTANCE, inverted))).build()));
-		this.add("burning_wrath", ApoliPowers.MODIFY_DAMAGE_DEALT.get().configure(
-				new ModifyDamageDealtConfiguration(new AttributeModifier("Additional damage while on fire", 3, AttributeModifier.Operation.ADDITION)),
-				PowerData.builder().addCondition(ApoliEntityConditions.ON_FIRE.get().configure(NoConfiguration.INSTANCE)).build()));
 		this.add("cat_vision", ApoliPowers.NIGHT_VISION.get().configure(FieldConfiguration.of(0.4F), PowerData.builder().addCondition(ApoliEntityConditions.SUBMERGED_IN.get().configure(new TagConfiguration<>(FluidTags.WATER), inverted)).build()));
 		this.add("claustrophobia", ApoliPowers.STACKING_STATUS_EFFECT.get().configure(
 				new StackingStatusEffectConfiguration(ListConfiguration.of(

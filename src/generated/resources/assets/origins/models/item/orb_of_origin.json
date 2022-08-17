@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "texture": "origins:item/orb_of_origin"
+    "layer0": "origins:item/orb_of_origin"
   }
 }

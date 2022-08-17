@@ -1,0 +1,20 @@
+{
+  "type": "apoli:action_on_item_use",
+  "entity_action": {
+    "type": "apoli:damage",
+    "amount": 2.0,
+    "source": {
+      "bypasses_armor": true,
+      "name": "hurt_by_water",
+      "unblockable": true
+    }
+  },
+  "hidden": true,
+  "item_action": "apoli:nothing",
+  "item_condition": {
+    "type": "apoli:ingredient",
+    "ingredient": {
+      "item": "minecraft:potion"
+    }
+  }
+}

@@ -1,4 +1,4 @@
-// 1.19	2022-07-19T13:30:56.2802783	Power Generator: origins
+// 1.19	2022-07-27T16:13:27.4878228	Power Generator: origins
 4063469de4a186ad0ece6e16cf509b4d76f59d23 data/origins/powers/aerial_combatant.json
 002373b088ee22ef1877183f91e7b4dfbf989fbf data/origins/powers/air_from_potions.json
 15cbfaeaec1b5b44eca80866747a0551e07dca4c data/origins/powers/aquatic.json
@@ -12,11 +12,17 @@ fb066445f2f3a0994279952a65cfd7d475a4fdb3 data/origins/powers/carnivore.json
 7557d19bbf9b6050673e54150a8fbae5ae5edad2 data/origins/powers/claustrophobia.json
 e98f654074a48e57b7c7a7c1fa27c8eca2d14f24 data/origins/powers/climbing.json
 4d35341eaf80a4e22d58a06ea4dd2c1a42fcd86c data/origins/powers/conduit_power_on_land.json
+4f54c55ae7d9483b7744ac8e6d95c0f020f52425 data/origins/powers/damage_from_potions.json
+c843bcb3a0fe5b907d5f92947a4a2be306930de7 data/origins/powers/damage_from_snowballs.json
+5bcb8234e666895cae6d926c6629875689bec350 data/origins/powers/fire_immunity.json
+97650b534f3f39dcba6ddd2715e797c7a8607441 data/origins/powers/flame_particles.json
 cc30dfe68515be15226ebf3a06460ac510863812 data/origins/powers/fragile.json
 c770cac3bf0b5e6755be03f001b60eddcff46b2b data/origins/powers/fresh_air.json
+f7777f65343132a012ce28e5313ea451041b3767 data/origins/powers/hotblooded.json
 cee66614d326a25c51167c250999a248ccc03a69 data/origins/powers/lay_eggs.json
 dee24be4f111e17994d3353c2d9e8cf8af2bece0 data/origins/powers/like_air.json
 ff8e2b2287f2962881605774472561611789647b data/origins/powers/like_water.json
+2f4425048f12122c5566855dd34618a21279fd66 data/origins/powers/nether_spawn.json
 dd3aa595965605c8ee59c09059bfc219a6c285a1 data/origins/powers/no_cobweb_slowdown.json
 805cffd1f228bdb0cbccb98bc46bdd9996260485 data/origins/powers/scare_creepers.json
 ec4c08c28b4b0dc6a36bc7afaabcb3f7a46daef1 data/origins/powers/slow_falling.json
@@ -24,3 +30,4 @@ ec4c08c28b4b0dc6a36bc7afaabcb3f7a46daef1 data/origins/powers/slow_falling.json
 633049995b3770c71a5a94da243aea692f981877 data/origins/powers/vegetarian.json
 07cfc9ad190ad75c10cf78421cfd67fff269b090 data/origins/powers/water_breathing.json
 5ee85cfadbda5bd1d0fdd2d7b2933996f9c76cb8 data/origins/powers/water_vision.json
+3390c277359637855171ac073687bf05acafeb50 data/origins/powers/water_vulnerability.json
