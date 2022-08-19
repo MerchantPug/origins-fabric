@@ -2,7 +2,6 @@ package io.github.apace100.origins.badge;
 
 import io.github.apace100.calio.data.SerializableData;
 import io.github.apace100.origins.util.PowerKeyManager;
-import io.github.edwinmindcraft.apoli.api.ApoliAPI;
 import io.github.edwinmindcraft.apoli.api.power.configuration.ConfiguredPower;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.gui.Font;
@@ -45,7 +44,7 @@ public record KeybindBadge(ResourceLocation spriteId, String text) implements Ba
 		List<ClientTooltipComponent> tooltips = new LinkedList<>();
 		Component keyText;
 		keyText = Component.literal("[")
-				.append(KeyMapping.createNameSupplier(PowerKeyManager.getKeyIdentifier(ApoliAPI.getPowers().getKey(powerType))).get())
+				.append(KeyMapping.createNameSupplier(PowerKeyManager.getKeyIdentifier(powerType.getRegistryName())).get())
 				.append(Component.literal("]"));
 		addLines(tooltips, Component.translatable(this.text, keyText), textRenderer, widthLimit);
 		return tooltips;

@@ -17,6 +17,7 @@ import org.apache.commons.lang3.Validate;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -49,7 +50,10 @@ public class OriginsAPI {
 
 	@Contract(pure = true)
 	public static List<Holder.Reference<OriginLayer>> getActiveLayers() {
-		return getLayersRegistry().holders().filter(x -> x.isBound() && x.value().enabled()).sorted().toList();
+		return getLayersRegistry().holders()
+				.filter(x -> x.isBound() && x.value().enabled())
+				.sorted(Comparator.comparing(Holder::get))
+				.toList();
 	}
 
 	public static ResourceLocation getPowerSource(ResourceKey<Origin> origin) {

@@ -3,7 +3,6 @@ package io.github.apace100.origins.util;
 import io.github.apace100.apoli.power.PowerTypeRegistry;
 import io.github.edwinmindcraft.apoli.api.ApoliAPI;
 import io.github.edwinmindcraft.apoli.api.power.configuration.ConfiguredPower;
-import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceLocation;
 
@@ -18,9 +17,8 @@ public class PowerKeyManager {
 	}
 
 	public static String getKeyIdentifier(ResourceLocation powerId) {
-		if (KEY_CACHE.containsKey(powerId)) {
+		if (KEY_CACHE.containsKey(powerId))
 			return KEY_CACHE.get(powerId);
-		}
 		String key = getKeyFromPower(powerId);
 		KEY_CACHE.put(powerId, key);
 		return key;
