@@ -6,7 +6,6 @@ import io.github.apace100.apoli.util.AttributedEntityAttributeModifier;
 import io.github.apace100.apoli.util.Comparison;
 import io.github.apace100.origins.Origins;
 import io.github.apace100.origins.power.OriginsPowerTypes;
-import io.github.apace100.origins.registry.ModDamageSources;
 import io.github.apace100.origins.registry.ModEnchantments;
 import io.github.edwinmindcraft.apoli.api.configuration.*;
 import io.github.edwinmindcraft.apoli.api.generator.PowerGenerator;
@@ -14,7 +13,6 @@ import io.github.edwinmindcraft.apoli.api.power.ConditionData;
 import io.github.edwinmindcraft.apoli.api.power.IActivePower;
 import io.github.edwinmindcraft.apoli.api.power.PowerData;
 import io.github.edwinmindcraft.apoli.api.power.configuration.ConfiguredBlockCondition;
-import io.github.edwinmindcraft.apoli.api.power.configuration.ConfiguredEntityCondition;
 import io.github.edwinmindcraft.apoli.api.power.configuration.ConfiguredItemCondition;
 import io.github.edwinmindcraft.apoli.api.power.configuration.ConfiguredPower;
 import io.github.edwinmindcraft.apoli.api.power.configuration.power.TogglePowerConfiguration;
@@ -41,7 +39,6 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.data.DataGenerator;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.tags.FluidTags;
-import net.minecraft.tags.TagKey;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
@@ -198,7 +195,7 @@ public class OriginsPowerProvider extends PowerGenerator {
 		));
 		this.add("fire_immunity", ApoliPowers.INVULNERABILITY.get().configure(HolderConfiguration.of(Holder.direct(ApoliDamageConditions.FIRE.get().configure(NoConfiguration.INSTANCE))), PowerData.DEFAULT));
 		this.add("flame_particles", ApoliPowers.PARTICLE.get().configure(new ParticleConfiguration(ParticleTypes.FLAME, 4, false), hidden));
-		this.add("hotblooded", ApoliPowers.EFFECT_IMMUNITY.get().configure(ListConfiguration.of(MobEffects.POISON, MobEffects.HUNGER), PowerData.DEFAULT));
+		this.add("hotblooded", ApoliPowers.EFFECT_IMMUNITY.get().configure(new EffectImmunityConfiguration(ListConfiguration.of(MobEffects.POISON, MobEffects.HUNGER), false), PowerData.DEFAULT));
 		this.add("nether_spawn", ApoliPowers.MODIFY_PLAYER_SPAWN.get().configure(new ModifyPlayerSpawnConfiguration(Level.NETHER, 0.125F, null, "center", null, null), PowerData.DEFAULT));
 		this.add("water_vulnerability", ApoliPowers.DAMAGE_OVER_TIME.get().configure(
 				new DamageOverTimeConfiguration(20, 1, 1, 2, waterDamage, ModEnchantments.WATER_PROTECTION.get(), 1.0F),
