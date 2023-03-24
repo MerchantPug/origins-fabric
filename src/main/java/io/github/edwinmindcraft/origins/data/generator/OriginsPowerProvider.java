@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import io.github.apace100.apoli.util.AttributedEntityAttributeModifier;
 import io.github.apace100.apoli.util.Comparison;
+import io.github.apace100.apoli.util.modifier.ModifierUtil;
 import io.github.apace100.origins.Origins;
 import io.github.apace100.origins.power.OriginsPowerTypes;
 import io.github.apace100.origins.registry.ModEnchantments;
@@ -28,7 +29,6 @@ import io.github.edwinmindcraft.apoli.common.registry.ApoliPowers;
 import io.github.edwinmindcraft.apoli.common.registry.action.ApoliDefaultActions;
 import io.github.edwinmindcraft.apoli.common.registry.action.ApoliEntityActions;
 import io.github.edwinmindcraft.apoli.common.registry.condition.*;
-import io.github.edwinmindcraft.apoli.common.util.ModifierUtils;
 import io.github.edwinmindcraft.origins.common.power.configuration.NoSlowdownConfiguration;
 import io.github.edwinmindcraft.origins.common.power.configuration.WaterVisionConfiguration;
 import io.github.edwinmindcraft.origins.data.tag.OriginsBlockTags;
@@ -69,7 +69,7 @@ public class OriginsPowerProvider extends PowerGenerator {
 		builder.put("underwater", Holder.direct(
 				ApoliPowers.MODIFY_BREAK_SPEED.get()
 						.configure(
-								new ModifyValueBlockConfiguration(ListConfiguration.of(ModifierUtils.fromAttributeModifier(new AttributeModifier(UUID.randomUUID(), "Unnamed attribute modifier", 4, AttributeModifier.Operation.MULTIPLY_TOTAL))), allow),
+								new ModifyValueBlockConfiguration(ListConfiguration.of(ModifierUtil.fromAttributeModifier(new AttributeModifier(UUID.randomUUID(), "Unnamed attribute modifier", 4, AttributeModifier.Operation.MULTIPLY_TOTAL))), allow),
 								PowerData.builder().addCondition(ApoliEntityConditions.and(
 										ApoliEntityConditions.SUBMERGED_IN.get().configure(new TagConfiguration<>(FluidTags.WATER)),
 										ApoliEntityConditions.ENCHANTMENT.get().configure(new EnchantmentConfiguration(new IntegerComparisonConfiguration(Comparison.EQUAL, 0), Enchantments.AQUA_AFFINITY, EnchantmentConfiguration.Calculation.SUM))
@@ -77,7 +77,7 @@ public class OriginsPowerProvider extends PowerGenerator {
 		builder.put("ungrounded", Holder.direct(
 				ApoliPowers.MODIFY_BREAK_SPEED.get()
 						.configure(
-								new ModifyValueBlockConfiguration(ListConfiguration.of(ModifierUtils.fromAttributeModifier(new AttributeModifier(UUID.randomUUID(), "Unnamed attribute modifier", 4, AttributeModifier.Operation.MULTIPLY_TOTAL))), allow),
+								new ModifyValueBlockConfiguration(ListConfiguration.of(ModifierUtil.fromAttributeModifier(new AttributeModifier(UUID.randomUUID(), "Unnamed attribute modifier", 4, AttributeModifier.Operation.MULTIPLY_TOTAL))), allow),
 								PowerData.builder().addCondition(ApoliEntityConditions.and(
 										ApoliEntityConditions.FLUID_HEIGHT.get().configure(new FluidTagComparisonConfiguration(new DoubleComparisonConfiguration(Comparison.GREATER_THAN, 0), FluidTags.WATER)),
 										ApoliEntityConditions.ON_BLOCK.get().configure(HolderConfiguration.defaultCondition(ApoliBuiltinRegistries.CONFIGURED_BLOCK_CONDITIONS), new ConditionData(true))
@@ -171,7 +171,7 @@ public class OriginsPowerProvider extends PowerGenerator {
 	private void makeBlazebornPowers() {
 		PowerData hidden = PowerData.builder().hidden().build();
 		this.add("burning_wrath", ApoliPowers.MODIFY_DAMAGE_DEALT.get().configure(
-				new ModifyDamageDealtConfiguration(ModifierUtils.fromAttributeModifier(new AttributeModifier("Additional damage while on fire", 3, AttributeModifier.Operation.ADDITION))),
+				new ModifyDamageDealtConfiguration(ModifierUtil.fromAttributeModifier(new AttributeModifier("Additional damage while on fire", 3, AttributeModifier.Operation.ADDITION))),
 				PowerData.builder().addCondition(ApoliEntityConditions.ON_FIRE.get().configure(NoConfiguration.INSTANCE)).build()));
 		DamageSource waterDamage = new DamageSource("hurt_by_water").bypassArmor().bypassMagic();
 		this.add("damage_from_potions", ApoliPowers.ACTION_ON_ITEM_USE.get().configure(
@@ -183,7 +183,7 @@ public class OriginsPowerProvider extends PowerGenerator {
 		));
 		this.add("damage_from_snowballs", ApoliPowers.MODIFY_DAMAGE_TAKEN.get().configure(
 				new ModifyDamageTakenConfiguration(
-						ListConfiguration.of(ModifierUtils.fromAttributeModifier(new AttributeModifier("Snowball damage taken like Blazes", 3, AttributeModifier.Operation.ADDITION))),
+						ListConfiguration.of(ModifierUtil.fromAttributeModifier(new AttributeModifier("Snowball damage taken like Blazes", 3, AttributeModifier.Operation.ADDITION))),
 						Holder.direct(ApoliDamageConditions.PROJECTILE.get().configure(FieldConfiguration.of(Optional.of(EntityType.SNOWBALL)))),
 						ApoliDefaultConditions.BIENTITY_DEFAULT.getHolder().orElseThrow(),
 						ApoliDefaultActions.ENTITY_DEFAULT.getHolder().orElseThrow(),
@@ -227,7 +227,7 @@ public class OriginsPowerProvider extends PowerGenerator {
 		this.add("no_cobweb_slowdown", OriginsPowerTypes.NO_SLOWDOWN.get().configure(new NoSlowdownConfiguration(OriginsBlockTags.COBWEBS), hidden));
 		this.add("conduit_power_on_land", OriginsPowerTypes.CONDUIT_POWER_ON_LAND.get().configure(NoConfiguration.INSTANCE, hidden));
 
-		this.add("aerial_combatant", ApoliPowers.MODIFY_DAMAGE_DEALT.get().configure(new ModifyDamageDealtConfiguration(ModifierUtils.fromAttributeModifier(new AttributeModifier("Extra damage while fall flying", 1, AttributeModifier.Operation.MULTIPLY_BASE))), PowerData.builder().addCondition(ApoliEntityConditions.FALL_FLYING.get().configure(NoConfiguration.INSTANCE)).build()));
+		this.add("aerial_combatant", ApoliPowers.MODIFY_DAMAGE_DEALT.get().configure(new ModifyDamageDealtConfiguration(ModifierUtil.fromAttributeModifier(new AttributeModifier("Extra damage while fall flying", 1, AttributeModifier.Operation.MULTIPLY_BASE))), PowerData.builder().addCondition(ApoliEntityConditions.FALL_FLYING.get().configure(NoConfiguration.INSTANCE)).build()));
 		this.add("air_from_potions", ApoliPowers.ACTION_ON_ITEM_USE.get().configure(new ActionOnItemUseConfiguration(Holder.direct(ApoliItemConditions.INGREDIENT.get().configure(FieldConfiguration.of(Ingredient.of(Items.POTION)))), Holder.direct(ApoliEntityActions.GAIN_AIR.get().configure(FieldConfiguration.of(60))), ApoliDefaultActions.ITEM_DEFAULT.getHolder().orElseThrow(RuntimeException::new)), hidden));
 		this.add("aqua_affinity", ApoliPowers.MULTIPLE.get().configure(new MultipleConfiguration<>(makeAquaAffinity()), PowerData.DEFAULT));
 		this.add("aquatic", ApoliPowers.ENTITY_GROUP.get().configure(FieldConfiguration.of(MobType.WATER), hidden));
