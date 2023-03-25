@@ -64,7 +64,7 @@ public class EnderianPearlEntity extends ThrownEnderpearl {
 				//Origins: No damage from enderian pearls.
 				//Origins: Disable Endermite spawning.
 				if (serverplayer.connection.getConnection().isConnected() && serverplayer.level == this.level && !serverplayer.isSleeping()) {
-					EntityTeleportEvent.EnderPearl event = ForgeEventFactory.onEnderPearlLand(serverplayer, this.getX(), this.getY(), this.getZ(), this, 0.0F);
+					EntityTeleportEvent.EnderPearl event = ForgeEventFactory.onEnderPearlLand(serverplayer, this.getX(), this.getY(), this.getZ(), this, 0.0F, result);
 					if (!event.isCanceled()) {
 						if (entity.isPassenger())
 							serverplayer.dismountTo(this.getX(), this.getY(), this.getZ());
