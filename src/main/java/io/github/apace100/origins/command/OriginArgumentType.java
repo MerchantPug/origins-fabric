@@ -19,6 +19,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
@@ -45,18 +46,15 @@ public class OriginArgumentType implements ArgumentType<ResourceLocation> {
 
 	@Override
 	public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> context, SuggestionsBuilder builder) {
-		OriginLayer layer = null;
-		try {
-			layer = context.getArgument("layer", OriginLayer.class);
-		} catch (Exception e) {
-			// no-op :)
-		}
-		if (layer != null) {
-			List<ResourceLocation> ids = layer.origins().stream().map(Holder::unwrapKey).flatMap(Optional::stream).map(ResourceKey::location).collect(Collectors.toCollection(LinkedList::new));
-			ids.add(OriginsBuiltinRegistries.ORIGINS.get().getKey(Origin.EMPTY));
-			return SharedSuggestionProvider.suggestResource(ids.stream(), builder);
-		} else {
-			return SharedSuggestionProvider.suggestResource(OriginsAPI.getOriginsRegistry().keySet(), builder);
-		}
+
+		List<ResourceLocation> availableOrigins = new ArrayList<>();
+		availableOrigins.add(OriginsBuiltinRegistries.ORIGINS.get().getKey(Origin.EMPTY));
+
+		ResourceLocation originLayerId = context.getArgument("layer", ResourceLocation.class);
+		OriginLayer originLayer = OriginsAPI.getLayersRegistry().get(originLayerId);
+
+		availableOrigins.addAll(originLayer.origins().stream().map(Holder::unwrapKey).flatMap(Optional::stream).map(ResourceKey::location).collect(Collectors.toCollection(LinkedList::new)));
+
+		return SharedSuggestionProvider.suggestResource(availableOrigins.stream(), builder);
 	}
 }
