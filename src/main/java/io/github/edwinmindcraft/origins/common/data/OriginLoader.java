@@ -50,8 +50,8 @@ public enum OriginLoader implements DynamicEntryValidator<Origin>, DynamicEntryF
 	@Override
 	public @NotNull DataResult<Origin> validate(@NotNull ResourceLocation resourceLocation, @NotNull Origin origin, @NotNull ICalioDynamicRegistryManager iCalioDynamicRegistryManager) {
 		Origin cleanup = origin.cleanup(iCalioDynamicRegistryManager);
-		if (origin.getPowers().size() > cleanup.getPowers().size())
-			Origins.LOGGER.error("Removed {} missing powers from {}", origin.getPowers().size() - cleanup.getPowers().size(), resourceLocation);
+		if (origin.getPowerAmount() > cleanup.getPowerAmount())
+			Origins.LOGGER.error("Removed {} missing powers from {}", origin.getPowerAmount() - cleanup.getPowerAmount(), resourceLocation);
 		return DataResult.success(cleanup);
 	}
 }

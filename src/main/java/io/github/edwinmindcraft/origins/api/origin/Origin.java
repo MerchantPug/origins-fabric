@@ -114,6 +114,10 @@ public class Origin {
 		return this.powers;
 	}
 
+    public int getPowerAmount() {
+        return (int) this.powers.stream().flatMap(HolderSet::stream).count();
+    }
+
 	public Stream<Holder<ConfiguredPower<?, ?>>> getValidPowers() {
 		return this.powers.stream().flatMap(HolderSet::stream).filter(Holder::isBound);
 	}
