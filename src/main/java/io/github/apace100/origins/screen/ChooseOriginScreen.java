@@ -47,7 +47,7 @@ public class ChooseOriginScreen extends OriginDisplayScreen {
 		Holder<OriginLayer> currentLayer = layerList.get(currentLayerIndex);
 		currentLayer.value().origins(Objects.requireNonNull(player)).forEach(origin -> {
 			if (origin.isBound() && origin.value().isChoosable()) {
-				ItemStack displayItem = origin.value().getIcon().copy();
+				ItemStack displayItem = origin.value().getIcon();
 				if (displayItem.getItem() == Items.PLAYER_HEAD) {
 					if (!displayItem.hasTag() || !Objects.requireNonNull(displayItem.getTag()).contains("SkullOwner")) {
 						displayItem.getOrCreateTag().putString("SkullOwner", player.getDisplayName().getString());
