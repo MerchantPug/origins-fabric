@@ -1,7 +1,7 @@
 package io.github.apace100.origins.badge;
 
-import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.LinkedListMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import com.google.gson.JsonElement;
@@ -40,7 +40,7 @@ public final class BadgeManager {
 			.dataErrorHandler((id, exception) -> Origins.LOGGER.error("Failed to read badge " + id + ", caused by", exception))
 			.defaultFactory(BadgeFactories.KEYBIND)
 			.buildAndRegister();
-	private static final Multimap<ResourceLocation, Badge> BADGES = HashMultimap.create();
+	private static final Multimap<ResourceLocation, Badge> BADGES = LinkedListMultimap.create();
 
 	private static final ResourceLocation TOGGLE_BADGE_SPRITE = Origins.identifier("textures/gui/badge/toggle.png");
 	private static final ResourceLocation ACTIVE_BADGE_SPRITE = Origins.identifier("textures/gui/badge/active.png");

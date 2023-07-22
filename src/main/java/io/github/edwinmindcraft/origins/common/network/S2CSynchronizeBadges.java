@@ -1,6 +1,6 @@
 package io.github.edwinmindcraft.origins.common.network;
 
-import com.google.common.collect.HashMultimap;
+import com.google.common.collect.LinkedListMultimap;
 import com.google.common.collect.Multimap;
 import io.github.apace100.origins.badge.Badge;
 import io.github.apace100.origins.badge.BadgeManager;
@@ -14,7 +14,7 @@ import java.util.function.Supplier;
 
 public record S2CSynchronizeBadges(Multimap<ResourceLocation, Badge> badges) {
 	public static S2CSynchronizeBadges decode(FriendlyByteBuf buf) {
-		Multimap<ResourceLocation, Badge> badges = HashMultimap.create();
+		Multimap<ResourceLocation, Badge> badges = LinkedListMultimap.create();
 		int size = buf.readVarInt();
 		for (int i = 0; i < size; i++) {
 			ResourceLocation rl = buf.readResourceLocation();
