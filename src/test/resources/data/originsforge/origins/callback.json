@@ -1,0 +1,10 @@
+{
+  "powers": [
+    "apoliforge:callback"
+  ],
+	"icon": {
+		"item": "minecraft:diamond"
+	},
+	"order": 1,
+	"impact": 0
+}

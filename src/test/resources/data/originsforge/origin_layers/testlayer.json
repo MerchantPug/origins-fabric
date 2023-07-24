@@ -1,5 +1,6 @@
 {
   "origins": [
-    "originsforge:test"
+    "originsforge:badges",
+    "originsforge:callback"
   ]
 }

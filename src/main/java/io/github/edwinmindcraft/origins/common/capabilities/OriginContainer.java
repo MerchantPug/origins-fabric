@@ -63,30 +63,36 @@ public class OriginContainer implements IOriginContainer, ICapabilitySerializabl
 
 	@Override
 	public void setOrigin(@NotNull ResourceKey<OriginLayer> layer, @NotNull ResourceKey<Origin> origin) {
-		ResourceKey<Origin> previous = this.layers.put(layer, origin);
-		Optional<Holder<OriginLayer>> layerHolder = OriginsAPI.getLayersRegistry().getHolder(layer);
-		Optional<Holder<Origin>> originHolder = OriginsAPI.getOriginsRegistry().getHolder(origin);
-		if (layerHolder.isEmpty() || !layerHolder.get().isBound()) {
-			Origins.LOGGER.error("Tried to assign missing layer {} to player {}", layer, this.player.getScoreboardName());
-			return;
-		}
-		if (originHolder.isEmpty() || !originHolder.get().isBound()) {
-			Origins.LOGGER.error("Tried to assign missing origin {} to player {}", origin, this.player.getScoreboardName());
-			return;
-		}
-		if (!Objects.equals(origin, previous)) {
-			IPowerContainer.get(this.player).ifPresent(container -> {
-				this.grantPowers(container, origin, originHolder.get());
-				if (previous != null)
-					container.removeAllPowersFromSource(OriginsAPI.getPowerSource(previous));
-				if (this.hasAllOrigins())
-					this.hadAllOrigins.set(true);
-			});
-			this.synchronize();
-			if (this.player instanceof ServerPlayer sp)
-				ChoseOriginCriterion.INSTANCE.trigger(sp, origin);
-		}
+        setOriginInternal(layer, origin, true);
 	}
+
+    public void setOriginInternal(@NotNull ResourceKey<OriginLayer> layer, @NotNull ResourceKey<Origin> origin, boolean handlePowers) {
+        Optional<Holder<OriginLayer>> layerHolder = OriginsAPI.getLayersRegistry().getHolder(layer);
+        Optional<Holder<Origin>> originHolder = OriginsAPI.getOriginsRegistry().getHolder(origin);
+        if (layerHolder.isEmpty() || !layerHolder.get().isBound()) {
+            Origins.LOGGER.error("Tried to assign missing layer {} to player {}", layer, this.player.getScoreboardName());
+            return;
+        }
+        if (originHolder.isEmpty() || !originHolder.get().isBound()) {
+            Origins.LOGGER.error("Tried to assign missing origin {} to player {}", origin, this.player.getScoreboardName());
+            return;
+        }
+        ResourceKey<Origin> previous = this.layers.put(layer, origin);
+        if (!Objects.equals(origin, previous) || !handlePowers) {
+            if (handlePowers) {
+                IPowerContainer.get(this.player).ifPresent(container -> {
+                    this.grantPowers(container, origin, originHolder.get());
+                    if (previous != null)
+                        container.removeAllPowersFromSource(OriginsAPI.getPowerSource(previous));
+                });
+                if (this.hasAllOrigins())
+                    this.hadAllOrigins.set(true);
+                if (this.player instanceof ServerPlayer sp)
+                    ChoseOriginCriterion.INSTANCE.trigger(sp, origin);
+            }
+            this.synchronize();
+        }
+    }
 
 	private void grantPowers(IPowerContainer container, @NotNull ResourceKey<Origin> origin, Holder<Origin> holder) {
 		ResourceLocation powerSource = OriginsAPI.getPowerSource(origin);
@@ -321,7 +327,8 @@ public class OriginContainer implements IOriginContainer, ICapabilitySerializabl
 				Origins.LOGGER.warn("Invalid origin {} found for layer {} on entity {}", origin, key, this.player.getScoreboardName());
 				continue;
 			}
-			Optional<Holder<Origin>> origin1 = originsRegistry.getHolder(ResourceKey.create(OriginsDynamicRegistries.ORIGINS_REGISTRY, orig));
+            ResourceKey<Origin> originKey = ResourceKey.create(OriginsDynamicRegistries.ORIGINS_REGISTRY, orig);
+			Optional<Holder<Origin>> origin1 = originsRegistry.getHolder(originKey);
 			if (origin1.isEmpty() || !origin1.get().isBound()) {
 				Origins.LOGGER.warn("Missing origin {} found for layer {} on entity {}", origin, key, this.player.getScoreboardName());
 				IPowerContainer.get(this.player).ifPresent(container -> container.removeAllPowersFromSource(OriginsAPI.getPowerSource(orig)));
@@ -333,13 +340,14 @@ public class OriginContainer implements IOriginContainer, ICapabilitySerializabl
 				IPowerContainer.get(this.player).ifPresent(container -> container.removeAllPowersFromSource(OriginsAPI.getPowerSource(origin1.get())));
 				continue;
 			}
-			Optional<Holder<OriginLayer>> layer = layersRegistry.getHolder(ResourceKey.create(OriginsDynamicRegistries.LAYERS_REGISTRY, rl));
+            ResourceKey<OriginLayer> layerKey = ResourceKey.create(OriginsDynamicRegistries.LAYERS_REGISTRY, rl);
+			Optional<Holder<OriginLayer>> layer = layersRegistry.getHolder(layerKey);
 			if (layer.isEmpty() || !layer.get().isBound()) {
 				Origins.LOGGER.warn("Missing layer {} on entity {}", rl, this.player.getScoreboardName());
 				IPowerContainer.get(this.player).ifPresent(container -> container.removeAllPowersFromSource(OriginsAPI.getPowerSource(origin1.get())));
 				continue;
 			}
-			this.setOrigin(layer.get(), origin1.get());
+			this.setOriginInternal(layerKey, originKey, false);
 		}
 		this.hadAllOrigins.set(tag.getBoolean("HadAllOrigins"));
 	}
