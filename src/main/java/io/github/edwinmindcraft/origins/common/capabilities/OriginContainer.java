@@ -249,14 +249,14 @@ public class OriginContainer implements IOriginContainer, ICapabilitySerializabl
 
 	@Override
 	public void onChosen(@NotNull ResourceKey<Origin> origin, boolean isOrb) {
-		IPowerContainer.get(this.player).ifPresent(container -> container.getPowersFromSource(OriginsAPI.getPowerSource(origin)).stream()
-				.map(container::getPower)
-				.filter(Objects::nonNull)
-				.forEach(power -> {
-                    if (power.isBound() && power.value().getFactory() instanceof IOriginCallbackPower callbackPower) {
-                        callbackPower.onChosen(power.value(), this.player, isOrb);
-                    }
-                }));
+        IPowerContainer.get(this.player).ifPresent(container -> container.getPowersFromSource(OriginsAPI.getPowerSource(origin)).stream()
+            .map(container::getPower)
+            .filter(Objects::nonNull)
+            .forEach(power -> {
+            if (power.isBound() && power.value().getFactory() instanceof IOriginCallbackPower callbackPower) {
+                callbackPower.onChosen(power.value(), this.player, isOrb);
+            }
+        }));
 	}
 
 	@Override

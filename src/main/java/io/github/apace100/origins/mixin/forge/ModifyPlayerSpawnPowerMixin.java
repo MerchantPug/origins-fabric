@@ -17,8 +17,8 @@ public abstract class ModifyPlayerSpawnPowerMixin implements IOriginCallbackPowe
 
     @Override
 	public <F extends PowerFactory<ModifyPlayerSpawnConfiguration>> void onChosen(@NotNull ConfiguredPower<ModifyPlayerSpawnConfiguration, F> configuration, @NotNull Entity living, boolean isOrb) {
-		if (configuration.getFactory() instanceof IOriginCallbackPower && !isOrb) { //This is IMO a better way to do this.
+        if (configuration.getFactory() instanceof IOriginCallbackPower && !isOrb) { //This is IMO a better way to do this.
             this.teleportToModifiedSpawn(configuration, living);
         }
-	}
+    }
 }
