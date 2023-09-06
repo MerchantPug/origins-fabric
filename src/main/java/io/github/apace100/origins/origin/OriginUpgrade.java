@@ -14,7 +14,7 @@ public class OriginUpgrade {
 	private final io.github.edwinmindcraft.origins.api.origin.OriginUpgrade wrapped;
 
 	public OriginUpgrade(ResourceLocation advancementCondition, ResourceLocation upgradeToOrigin, String announcement) {
-		this(new io.github.edwinmindcraft.origins.api.origin.OriginUpgrade(advancementCondition, OriginsAPI.getOriginsRegistry().getOrCreateHolderOrThrow(ResourceKey.create(OriginsDynamicRegistries.ORIGINS_REGISTRY, upgradeToOrigin)), announcement));
+		this(new io.github.edwinmindcraft.origins.api.origin.OriginUpgrade(advancementCondition, OriginsAPI.getOriginsRegistry().getHolderOrThrow(ResourceKey.create(OriginsDynamicRegistries.ORIGINS_REGISTRY, upgradeToOrigin)), announcement));
 	}
 
 	public OriginUpgrade(io.github.edwinmindcraft.origins.api.origin.OriginUpgrade wrapped) {

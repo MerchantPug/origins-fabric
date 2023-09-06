@@ -128,9 +128,9 @@ public record PartialOrigin(@NotNull List<HolderSet<ConfiguredPower<?, ?>>> powe
 
 		@Contract("_ -> this")
 		public Builder powers(Iterable<ResourceLocation> powers) {
-			Registry<ConfiguredPower<?, ?>> registry = ApoliAPI.getPowers(ServerLifecycleHooks.getCurrentServer() != null ? ServerLifecycleHooks.getCurrentServer().registryAccess() : RegistryAccess.BUILTIN.get());
+			Registry<ConfiguredPower<?, ?>> registry = ApoliAPI.getPowers(ServerLifecycleHooks.getCurrentServer() != null ? ServerLifecycleHooks.getCurrentServer().registryAccess() : RegistryAccess.EMPTY);
 			List<ResourceKey<ConfiguredPower<?, ?>>> keys = Streams.stream(powers).map(loc -> ResourceKey.create(ApoliDynamicRegistries.CONFIGURED_POWER_KEY, loc)).toList();
-			this.powers.add(HolderSet.direct(registry::getOrCreateHolderOrThrow, keys));
+			this.powers.add(HolderSet.direct(registry::getHolderOrThrow, keys));
 			return this;
 		}
 

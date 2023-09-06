@@ -1,6 +1,7 @@
 package io.github.apace100.origins.badge;
 
 import io.github.apace100.calio.data.SerializableData;
+import io.github.apace100.origins.Origins;
 import io.github.apace100.origins.screen.tooltip.CraftingRecipeTooltipComponent;
 import io.github.edwinmindcraft.apoli.api.power.configuration.ConfiguredPower;
 import net.minecraft.ChatFormatting;
@@ -54,17 +55,21 @@ public record CraftingRecipeBadge(ResourceLocation spriteId,
 	@OnlyIn(Dist.CLIENT)
 	public List<ClientTooltipComponent> getTooltipComponents(ConfiguredPower<?, ?> powerType, int widthLimit, float time, Font textRenderer) {
 		List<ClientTooltipComponent> tooltips = new LinkedList<>();
+        if (Minecraft.getInstance().level == null) {
+            Origins.LOGGER.warn("Could not construct crafting recipe badge, because world was null");
+            return tooltips;
+        }
 		if (Minecraft.getInstance().options.advancedItemTooltips) {
 			Component recipeIdText = Component.literal(this.recipe.getId().toString()).withStyle(ChatFormatting.DARK_GRAY);
 			widthLimit = Math.max(130, textRenderer.width(recipeIdText));
 			if (this.prefix != null) TooltipBadge.addLines(tooltips, this.prefix, textRenderer, widthLimit);
-			tooltips.add(new CraftingRecipeTooltipComponent(this.peekInputs(time), this.recipe.getResultItem().copy()));
+			tooltips.add(new CraftingRecipeTooltipComponent(this.peekInputs(time), this.recipe.getResultItem(Minecraft.getInstance().level.registryAccess()).copy()));
 			if (this.suffix != null) TooltipBadge.addLines(tooltips, this.suffix, textRenderer, widthLimit);
 			TooltipBadge.addLines(tooltips, recipeIdText, textRenderer, widthLimit);
 		} else {
 			widthLimit = 130;
 			if (this.prefix != null) TooltipBadge.addLines(tooltips, this.prefix, textRenderer, widthLimit);
-			tooltips.add(new CraftingRecipeTooltipComponent(this.peekInputs(time), this.recipe.getResultItem().copy()));
+			tooltips.add(new CraftingRecipeTooltipComponent(this.peekInputs(time), this.recipe.getResultItem(Minecraft.getInstance().level.registryAccess()).copy()));
 			if (this.suffix != null) TooltipBadge.addLines(tooltips, this.suffix, textRenderer, widthLimit);
 		}
 		return tooltips;

@@ -47,15 +47,15 @@ public record ConditionedOrigin(
 		else if (tag)
 			origins = DataResult.success(ImmutableList.of(OriginsAPI.getOriginsRegistry().getOrCreateTag(TagKey.create(OriginsDynamicRegistries.ORIGINS_REGISTRY, resourceLocation))));
 		else
-			origins = OriginsAPI.getOriginsRegistry().getOrCreateHolder(ResourceKey.create(OriginsDynamicRegistries.ORIGINS_REGISTRY, resourceLocation)).map(HolderSet::direct).map(ImmutableList::of);
-		return origins.map(set -> new ConditionedOrigin(ApoliBuiltinRegistries.CONFIGURED_ENTITY_CONDITIONS.get().getHolder(ApoliDynamicRegistries.CONDITION_DEFAULT).orElseThrow(), set));
+            origins = DataResult.success(ImmutableList.of(HolderSet.direct(OriginsAPI.getOriginsRegistry().createRegistrationLookup().getOrThrow(ResourceKey.create(OriginsDynamicRegistries.ORIGINS_REGISTRY, resourceLocation)))));
+        return origins.map(set -> new ConditionedOrigin(ApoliBuiltinRegistries.CONFIGURED_ENTITY_CONDITIONS.get().getHolder(ApoliDynamicRegistries.CONDITION_DEFAULT).orElseThrow(), set));
 	}, co -> {
 		if (co.origins().size() != 1)
-			return DataResult.error("Invalid size: " + co.origins().size());
+			return DataResult.error(() -> "Invalid size: " + co.origins().size());
 		return co.origins().get(0).unwrap().<DataResult<ResourceLocation>>map(x -> DataResult.success(x.location()), x -> {
 			if (x.size() != 1)
-				return DataResult.error("Cannot serialize non-tag list");
-			return x.get(0).unwrapKey().map(ResourceKey::location).map(DataResult::success).orElseGet(() -> DataResult.error("Unregistered origin"));
+				return DataResult.error(() -> "Cannot serialize non-tag list");
+			return x.get(0).unwrapKey().map(ResourceKey::location).map(DataResult::success).orElseGet(() -> DataResult.error(() -> "Unregistered origin"));
 		}).map(ResourceLocation::toString);
 	});
 

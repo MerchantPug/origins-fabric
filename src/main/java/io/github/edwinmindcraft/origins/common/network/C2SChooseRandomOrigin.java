@@ -33,7 +33,7 @@ public record C2SChooseRandomOrigin(ResourceLocation layer) {
 			ServerPlayer sender = contextSupplier.get().getSender();
 			if (sender == null) return;
 			IOriginContainer.get(sender).ifPresent(container -> {
-				Optional<Holder<OriginLayer>> layer = OriginsAPI.getLayersRegistry().getHolder(ResourceKey.create(OriginsDynamicRegistries.LAYERS_REGISTRY, this.layer())).filter(Holder::isBound);
+				Optional<Holder.Reference<OriginLayer>> layer = OriginsAPI.getLayersRegistry().getHolder(ResourceKey.create(OriginsDynamicRegistries.LAYERS_REGISTRY, this.layer())).filter(Holder::isBound);
 				if (layer.isEmpty()) {
 					Origins.LOGGER.warn("Player {} tried to select a random origin for missing layer {}", sender.getScoreboardName(), this.layer());
 					return;

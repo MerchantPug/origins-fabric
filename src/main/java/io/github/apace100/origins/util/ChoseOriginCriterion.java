@@ -20,7 +20,7 @@ public class ChoseOriginCriterion extends SimpleCriterionTrigger<ChoseOriginCrit
 	private static final ResourceLocation ID = new ResourceLocation(Origins.MODID, "chose_origin");
 
 	@Override
-	protected @NotNull Conditions createInstance(@NotNull JsonObject obj, EntityPredicate.@NotNull Composite playerPredicate, @NotNull DeserializationContext predicateDeserializer) {
+	protected @NotNull Conditions createInstance(@NotNull JsonObject obj, @NotNull ContextAwarePredicate playerPredicate, @NotNull DeserializationContext predicateDeserializer) {
 		ResourceLocation id = ResourceLocation.tryParse(GsonHelper.getAsString(obj, "origin"));
 		return new Conditions(playerPredicate, id);
 	}
@@ -37,7 +37,7 @@ public class ChoseOriginCriterion extends SimpleCriterionTrigger<ChoseOriginCrit
 	public static class Conditions extends AbstractCriterionTriggerInstance {
 		private final ResourceLocation originId;
 
-		public Conditions(EntityPredicate.Composite player, ResourceLocation originId) {
+		public Conditions(ContextAwarePredicate player, ResourceLocation originId) {
 			super(ChoseOriginCriterion.ID, player);
 			this.originId = originId;
 		}

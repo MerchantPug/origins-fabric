@@ -7,7 +7,7 @@ import net.minecraftforge.common.data.ExistingFileHelper;
 
 public class OriginsItemModelProvider extends ItemModelProvider {
 	public OriginsItemModelProvider(DataGenerator generator, ExistingFileHelper existingFileHelper) {
-		super(generator, Origins.MODID, existingFileHelper);
+		super(generator.getPackOutput(), Origins.MODID, existingFileHelper);
 	}
 
 	@Override

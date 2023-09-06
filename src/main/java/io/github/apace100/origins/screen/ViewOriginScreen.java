@@ -10,6 +10,7 @@ import io.github.edwinmindcraft.origins.api.origin.Origin;
 import io.github.edwinmindcraft.origins.api.origin.OriginLayer;
 import io.github.edwinmindcraft.origins.common.registry.OriginRegisters;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
@@ -38,8 +39,8 @@ public class ViewOriginScreen extends OriginDisplayScreen {
 		Registry<OriginLayer> layersRegistry = OriginsAPI.getLayersRegistry();
 
 		origins.forEach((layer, origin) -> {
-			Optional<Holder<Origin>> origin1 = originsRegistry.getHolder(origin);
-			Optional<Holder<OriginLayer>> layer1 = layersRegistry.getHolder(layer);
+			Optional<Holder.Reference<Origin>> origin1 = originsRegistry.getHolder(origin);
+			Optional<Holder.Reference<OriginLayer>> layer1 = layersRegistry.getHolder(layer);
 			if (origin1.isEmpty() || !origin1.get().isBound())
 				return;
 			if (layer1.isEmpty() || !layer1.get().isBound())
@@ -74,22 +75,22 @@ public class ViewOriginScreen extends OriginDisplayScreen {
 		this.guiLeft = (this.width - windowWidth) / 2;
 		this.guiTop = (this.height - windowHeight) / 2;
 		if (this.originLayers.size() > 0) {
-			this.addRenderableWidget(this.chooseOriginButton = new Button(this.guiLeft + windowWidth / 2 - 50, this.guiTop + windowHeight - 40, 100, 20, Component.translatable(Origins.MODID + ".gui.choose"), b ->
-					Minecraft.getInstance().setScreen(new ChooseOriginScreen(Lists.newArrayList(this.originLayers.get(this.currentLayer).getA()), 0, false))));
+			this.addRenderableWidget(this.chooseOriginButton = Button.builder(Component.translatable(Origins.MODID + ".gui.choose"), b ->
+					Minecraft.getInstance().setScreen(new ChooseOriginScreen(Lists.newArrayList(this.originLayers.get(this.currentLayer).getA()), 0, false))).bounds(this.guiLeft + windowWidth / 2 - 50, this.guiTop + windowHeight - 40, 100, 20).build());
 			Player player = Objects.requireNonNull(Minecraft.getInstance().player);
 			this.chooseOriginButton.active = this.chooseOriginButton.visible = this.originLayers.get(this.currentLayer).getB().is(OriginRegisters.EMPTY.getId()) && this.originLayers.get(this.currentLayer).getA().value().getOriginOptionCount(player) > 0;
 			if (this.originLayers.size() > 1) {
-				this.addRenderableWidget(new Button(this.guiLeft - 40, this.height / 2 - 10, 20, 20, Component.literal("<"), b -> {
+				this.addRenderableWidget(Button.builder(Component.literal("<"), b -> {
 					this.currentLayer = (this.currentLayer - 1 + this.originLayers.size()) % this.originLayers.size();
 					this.switchLayer(player);
-				}));
-				this.addRenderableWidget(new Button(this.guiLeft + windowWidth + 20, this.height / 2 - 10, 20, 20, Component.literal(">"), b -> {
+				}).bounds(this.guiLeft - 40, this.height / 2 - 10, 20, 20).build());
+				this.addRenderableWidget(Button.builder(Component.literal(">"), b -> {
 					this.currentLayer = (this.currentLayer + 1) % this.originLayers.size();
 					this.switchLayer(player);
-				}));
+				}).bounds(this.guiLeft + windowWidth + 20, this.height / 2 - 10, 20, 20).build());
 			}
 		}
-		this.addRenderableWidget(new Button(this.guiLeft + windowWidth / 2 - 50, this.guiTop + windowHeight + 5, 100, 20, Component.translatable(Origins.MODID + ".gui.close"), b -> Minecraft.getInstance().setScreen(null)));
+		this.addRenderableWidget(Button.builder(Component.translatable(Origins.MODID + ".gui.close"), b -> Minecraft.getInstance().setScreen(null)).bounds(this.guiLeft + windowWidth / 2 - 50, this.guiTop + windowHeight + 5, 100, 20).build());
 	}
 
 	private void switchLayer(Player player) {
@@ -99,11 +100,11 @@ public class ViewOriginScreen extends OriginDisplayScreen {
 	}
 
 	@Override
-	public void render(@NotNull PoseStack matrices, int mouseX, int mouseY, float delta) {
-		super.render(matrices, mouseX, mouseY, delta);
+	public void render(@NotNull GuiGraphics graphics, int mouseX, int mouseY, float delta) {
+		super.render(graphics, mouseX, mouseY, delta);
 		if (this.originLayers.size() == 0) {
 			//if(OriginsClient.isServerRunningOrigins) {
-			drawCenteredString(matrices, this.font, Component.translatable(Origins.MODID + ".gui.view_origin.empty").getString(), this.width / 2, this.guiTop + 48, 0xFFFFFF);
+			graphics.drawCenteredString(this.font, Component.translatable(Origins.MODID + ".gui.view_origin.empty").getString(), this.width / 2, this.guiTop + 48, 0xFFFFFF);
 			//} else {
 			//	drawCenteredText(matrices, this.textRenderer, new TranslatableText(Origins.MODID + ".gui.view_origin.not_installed").getString(), width / 2, guiTop + 48, 0xFFFFFF);
 			//}

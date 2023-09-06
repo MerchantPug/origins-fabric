@@ -19,10 +19,7 @@ import io.github.edwinmindcraft.origins.api.registry.OriginsDynamicRegistries;
 import io.github.edwinmindcraft.origins.common.OriginsCommon;
 import io.github.edwinmindcraft.origins.common.network.S2CSynchronizeOrigin;
 import io.github.edwinmindcraft.origins.common.registry.OriginRegisters;
-import net.minecraft.core.Direction;
-import net.minecraft.core.Holder;
-import net.minecraft.core.HolderSet;
-import net.minecraft.core.Registry;
+import net.minecraft.core.*;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceKey;
@@ -67,8 +64,8 @@ public class OriginContainer implements IOriginContainer, ICapabilitySerializabl
 	}
 
     public void setOriginInternal(@NotNull ResourceKey<OriginLayer> layer, @NotNull ResourceKey<Origin> origin, boolean handlePowers) {
-        Optional<Holder<OriginLayer>> layerHolder = OriginsAPI.getLayersRegistry().getHolder(layer);
-        Optional<Holder<Origin>> originHolder = OriginsAPI.getOriginsRegistry().getHolder(origin);
+        Optional<Holder.Reference<OriginLayer>> layerHolder = OriginsAPI.getLayersRegistry().getHolder(layer);
+        Optional<Holder.Reference<Origin>> originHolder = OriginsAPI.getOriginsRegistry().getHolder(origin);
         if (layerHolder.isEmpty() || !layerHolder.get().isBound()) {
             Origins.LOGGER.error("Tried to assign missing layer {} to player {}", layer, this.player.getScoreboardName());
             return;
@@ -150,7 +147,7 @@ public class OriginContainer implements IOriginContainer, ICapabilitySerializabl
 			this.cleanupPowers = false;
 			IPowerContainer.get(this.player).ifPresent(this::applyCleanup);
 		}
-		if (this.shouldSync() && !this.player.level.isClientSide() && this.syncCooldown.decrementAndGet() <= 0) {
+		if (this.shouldSync() && !this.player.level().isClientSide() && this.syncCooldown.decrementAndGet() <= 0) {
 			OriginsCommon.CHANNEL.send(PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> this.player), this.getSynchronizationPacket());
 			this.syncCooldown.set(20);
 			ApoliAPI.synchronizePowerContainer(this.player);
@@ -158,8 +155,8 @@ public class OriginContainer implements IOriginContainer, ICapabilitySerializabl
 	}
 
 	private void applyCleanup(@NotNull IPowerContainer container) {
-		Registry<Origin> originsRegistry = OriginsAPI.getOriginsRegistry();
-		Registry<OriginLayer> layersRegistry = OriginsAPI.getLayersRegistry();
+		MappedRegistry<Origin> originsRegistry = OriginsAPI.getOriginsRegistry();
+        MappedRegistry<OriginLayer> layersRegistry = OriginsAPI.getLayersRegistry();
 		Iterator<Map.Entry<ResourceKey<OriginLayer>, ResourceKey<Origin>>> iterator = this.layers.entrySet().iterator();
 		while (iterator.hasNext()) {
 			Map.Entry<ResourceKey<OriginLayer>, ResourceKey<Origin>> entry = iterator.next();
@@ -181,27 +178,30 @@ public class OriginContainer implements IOriginContainer, ICapabilitySerializabl
 			Set<ResourceKey<ConfiguredPower<?, ?>>> currentPowers = ImmutableSet.copyOf(container.getPowersFromSource(powerSource));
 			Registry<ConfiguredPower<?, ?>> registry = ApoliAPI.getPowers(this.player.getServer());
 
-			Set<ResourceKey<ConfiguredPower<?, ?>>> newPowers = originsRegistry.getOrThrow(origin).getValidPowers().flatMap(holder -> {
-				if (!holder.isBound())
-					return Stream.empty();
-				Optional<ResourceKey<ConfiguredPower<?, ?>>> key = holder.unwrap().map(Optional::of, registry::getResourceKey);
-				if (key.isEmpty())
-					return Stream.empty();
-				HashSet<ResourceKey<ConfiguredPower<?, ?>>> names = new HashSet<>();
-				names.add(key.get());
-				names.addAll(holder.value().getChildrenKeys());
-				return names.stream();
-			}).collect(ImmutableSet.toImmutableSet());
-			Set<ResourceKey<ConfiguredPower<?, ?>>> toRemove = currentPowers.stream().filter(x -> !newPowers.contains(x)).collect(Collectors.toSet());
-			Set<ResourceKey<ConfiguredPower<?, ?>>> toAdd = newPowers.stream().filter(x -> !currentPowers.contains(x)).collect(Collectors.toSet());
-			if (!toRemove.isEmpty()) {
-				toRemove.forEach(power -> container.removePower(power, powerSource));
-				Origins.LOGGER.debug("CLEANUP: Revoked {} removed powers for origin {} on player {}", toRemove.size(), origin, this.player.getScoreboardName());
-			}
-			if (!toAdd.isEmpty()) {
-				toAdd.forEach(power -> container.addPower(power, powerSource));
-				Origins.LOGGER.debug("CLEANUP: Granted {} missing powers for origin {} on player {}", toAdd.size(), origin, this.player.getScoreboardName());
-			}
+            Holder<Origin> originHolder = originsRegistry.createRegistrationLookup().getOrThrow(origin);
+            if (originHolder.isBound()) {
+                Set<ResourceKey<ConfiguredPower<?, ?>>> newPowers = originHolder.value().getValidPowers().flatMap(holder -> {
+                    if (!holder.isBound())
+                        return Stream.empty();
+                    Optional<ResourceKey<ConfiguredPower<?, ?>>> key = holder.unwrap().map(Optional::of, registry::getResourceKey);
+                    if (key.isEmpty())
+                        return Stream.empty();
+                    HashSet<ResourceKey<ConfiguredPower<?, ?>>> names = new HashSet<>();
+                    names.add(key.get());
+                    names.addAll(holder.value().getChildrenKeys());
+                    return names.stream();
+                }).collect(ImmutableSet.toImmutableSet());
+                Set<ResourceKey<ConfiguredPower<?, ?>>> toRemove = currentPowers.stream().filter(x -> !newPowers.contains(x)).collect(Collectors.toSet());
+                Set<ResourceKey<ConfiguredPower<?, ?>>> toAdd = newPowers.stream().filter(x -> !currentPowers.contains(x)).collect(Collectors.toSet());
+                if (!toRemove.isEmpty()) {
+                    toRemove.forEach(power -> container.removePower(power, powerSource));
+                    Origins.LOGGER.debug("CLEANUP: Revoked {} removed powers for origin {} on player {}", toRemove.size(), origin, this.player.getScoreboardName());
+                }
+                if (!toAdd.isEmpty()) {
+                    toAdd.forEach(power -> container.addPower(power, powerSource));
+                    Origins.LOGGER.debug("CLEANUP: Granted {} missing powers for origin {} on player {}", toAdd.size(), origin, this.player.getScoreboardName());
+                }
+            }
 		}
 	}
 
@@ -328,7 +328,7 @@ public class OriginContainer implements IOriginContainer, ICapabilitySerializabl
 				continue;
 			}
             ResourceKey<Origin> originKey = ResourceKey.create(OriginsDynamicRegistries.ORIGINS_REGISTRY, orig);
-			Optional<Holder<Origin>> origin1 = originsRegistry.getHolder(originKey);
+			Optional<Holder.Reference<Origin>> origin1 = originsRegistry.getHolder(originKey);
 			if (origin1.isEmpty() || !origin1.get().isBound()) {
 				Origins.LOGGER.warn("Missing origin {} found for layer {} on entity {}", origin, key, this.player.getScoreboardName());
 				IPowerContainer.get(this.player).ifPresent(container -> container.removeAllPowersFromSource(OriginsAPI.getPowerSource(orig)));
@@ -341,7 +341,7 @@ public class OriginContainer implements IOriginContainer, ICapabilitySerializabl
 				continue;
 			}
             ResourceKey<OriginLayer> layerKey = ResourceKey.create(OriginsDynamicRegistries.LAYERS_REGISTRY, rl);
-			Optional<Holder<OriginLayer>> layer = layersRegistry.getHolder(layerKey);
+			Optional<Holder.Reference<OriginLayer>> layer = layersRegistry.getHolder(layerKey);
 			if (layer.isEmpty() || !layer.get().isBound()) {
 				Origins.LOGGER.warn("Missing layer {} on entity {}", rl, this.player.getScoreboardName());
 				IPowerContainer.get(this.player).ifPresent(container -> container.removeAllPowersFromSource(OriginsAPI.getPowerSource(origin1.get())));

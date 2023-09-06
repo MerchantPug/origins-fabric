@@ -3,6 +3,7 @@ package io.github.edwinmindcraft.origins.common.power.configuration;
 import com.mojang.serialization.Codec;
 import io.github.edwinmindcraft.apoli.api.IDynamicFeatureConfiguration;
 import net.minecraft.core.Registry;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
@@ -17,7 +18,7 @@ import java.util.Optional;
  */
 public record NoSlowdownConfiguration(@Nullable TagKey<Block> blocks) implements IDynamicFeatureConfiguration {
 	//FIXME As this is a non-standard power, move it to a list.
-	public static final Codec<NoSlowdownConfiguration> CODEC = TagKey.hashedCodec(Registry.BLOCK_REGISTRY).optionalFieldOf("tag")
+	public static final Codec<NoSlowdownConfiguration> CODEC = TagKey.hashedCodec(Registries.BLOCK).optionalFieldOf("tag")
 			.xmap(x -> new NoSlowdownConfiguration(x.orElse(null)), x -> Optional.ofNullable(x.blocks())).codec();
 
 	public boolean test(BlockState state) {

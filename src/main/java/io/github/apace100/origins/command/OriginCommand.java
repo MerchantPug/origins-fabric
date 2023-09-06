@@ -88,8 +88,8 @@ public class OriginCommand {
 
 		int processedTargets = 0;
 
-		Optional<Holder<OriginLayer>> layerHolder = OriginsAPI.getLayersRegistry().getHolder(originLayer);
-		Optional<Holder<Origin>> originHolder = OriginsAPI.getOriginsRegistry().getHolder(origin);
+		Optional<Holder.Reference<OriginLayer>> layerHolder = OriginsAPI.getLayersRegistry().getHolder(originLayer);
+		Optional<Holder.Reference<Origin>> originHolder = OriginsAPI.getOriginsRegistry().getHolder(origin);
 
 		if (
 				layerHolder.isPresent() && layerHolder.get().isBound() && originHolder.isPresent() && originHolder.get().isBound() &&
@@ -102,8 +102,11 @@ public class OriginCommand {
 			}
 
 
-			if (processedTargets == 1) serverCommandSource.sendSuccess(Component.translatable("commands.origin.set.success.single", targets.iterator().next().getDisplayName().getString(), layerHolder.get().value().name(), originHolder.get().value().getName()), true);
-			else serverCommandSource.sendSuccess(Component.translatable("commands.origin.set.success.multiple", processedTargets, layerHolder.get().value().name(), originHolder.get().value().getName()), true);
+			if (processedTargets == 1) serverCommandSource.sendSuccess(() -> Component.translatable("commands.origin.set.success.single", targets.iterator().next().getDisplayName().getString(), layerHolder.get().value().name(), originHolder.get().value().getName()), true);
+			else {
+                int finalProcessedTargets = processedTargets;
+                serverCommandSource.sendSuccess(() -> Component.translatable("commands.origin.set.success.multiple", finalProcessedTargets, layerHolder.get().value().name(), originHolder.get().value().getName()), true);
+            }
 		}
 
 		else serverCommandSource.sendFailure(Component.translatable("commands.origin.unregistered_in_layer", origin.location(), originLayer.location()));
@@ -133,8 +136,8 @@ public class OriginCommand {
 		ResourceKey<Origin> origin = OriginArgumentType.getOrigin(commandContext, "origin");
 		CommandSourceStack serverCommandSource = commandContext.getSource();
 
-		Optional<Holder<OriginLayer>> layerHolder = OriginsAPI.getLayersRegistry().getHolder(originLayer);
-		Optional<Holder<Origin>> originHolder = OriginsAPI.getOriginsRegistry().getHolder(origin);
+		Optional<Holder.Reference<OriginLayer>> layerHolder = OriginsAPI.getLayersRegistry().getHolder(originLayer);
+		Optional<Holder.Reference<Origin>> originHolder = OriginsAPI.getOriginsRegistry().getHolder(origin);
 
 		int processedTargets = 0;
 
@@ -151,9 +154,11 @@ public class OriginCommand {
 			if (processedTargets == 0)
 				serverCommandSource.sendFailure(Component.translatable("commands.execute.conditional.fail"));
 			else if (processedTargets == 1)
-				serverCommandSource.sendSuccess(Component.translatable("commands.execute.conditional.pass"), true);
-			else
-				serverCommandSource.sendSuccess(Component.translatable("commands.execute.conditional.pass_count", processedTargets), true);
+				serverCommandSource.sendSuccess(() -> Component.translatable("commands.execute.conditional.pass"), true);
+			else {
+                int finalProcessedTargets = processedTargets;
+                serverCommandSource.sendSuccess(() -> Component.translatable("commands.execute.conditional.pass_count", finalProcessedTargets), true);
+            }
 		}
 		else serverCommandSource.sendFailure(Component.translatable("commands.origin.unregistered_in_layer", origin.location(), originLayer.location()));
 
@@ -176,12 +181,12 @@ public class OriginCommand {
 		ResourceKey<OriginLayer> originLayer = LayerArgumentType.getLayer(commandContext, "layer");
 		CommandSourceStack serverCommandSource = commandContext.getSource();
 
-		Optional<Holder<OriginLayer>> layerHolder = OriginsAPI.getLayersRegistry().getHolder(originLayer);
+		Optional<Holder.Reference<OriginLayer>> layerHolder = OriginsAPI.getLayersRegistry().getHolder(originLayer);
 
 		IOriginContainer.get(target).ifPresent(container -> {
 			ResourceKey<Origin> origin = container.getOrigin(originLayer);
-			Optional<Holder<Origin>> originHolder = OriginsAPI.getOriginsRegistry().getHolder(origin);
-			serverCommandSource.sendSuccess(Component.translatable("commands.origin.get.result", target.getDisplayName().getString(), layerHolder.get().value().name(), originHolder.get().value().getName(), origin.location()), true);
+			Optional<Holder.Reference<Origin>> originHolder = OriginsAPI.getOriginsRegistry().getHolder(origin);
+			serverCommandSource.sendSuccess(() -> Component.translatable("commands.origin.get.result", target.getDisplayName().getString(), layerHolder.get().value().name(), originHolder.get().value().getName(), origin.location()), true);
 		});
 
 		return 1;
@@ -206,7 +211,7 @@ public class OriginCommand {
 				openLayerScreen(target, List.of(holder));
 			}
 
-			serverCommandSource.sendSuccess(Component.translatable("commands.origin.gui.layer", targets.size(), holder.value().name()), true);
+			serverCommandSource.sendSuccess(() -> Component.translatable("commands.origin.gui.layer", targets.size(), holder.value().name()), true);
 
 		});
 
@@ -237,7 +242,7 @@ public class OriginCommand {
 			openLayerScreen(target, originLayers);
 		}
 
-		serverCommandSource.sendSuccess(Component.translatable("commands.origin.gui.all", targets.size()), false);
+		serverCommandSource.sendSuccess(() -> Component.translatable("commands.origin.gui.all", targets.size()), false);
 		return targets.size();
 
 	}
@@ -255,7 +260,7 @@ public class OriginCommand {
 		ResourceKey<OriginLayer> originLayer = LayerArgumentType.getLayer(commandContext, "layer");
 
 
-		Optional<Holder<OriginLayer>> layerHolder = OriginsAPI.getLayersRegistry().getHolder(originLayer);;
+		Optional<Holder.Reference<OriginLayer>> layerHolder = OriginsAPI.getLayersRegistry().getHolder(originLayer);;
 
 		if (layerHolder.isPresent() && layerHolder.get().isBound()) {
 
@@ -265,8 +270,11 @@ public class OriginCommand {
 					origin = getRandomOrigin(target, layerHolder.get());
 				}
 
-				if (targets.size() > 1) serverCommandSource.sendSuccess(Component.translatable("commands.origin.random.success.multiple", targets.size(), layerHolder.get().value().name()), true);
-				else if (targets.size() == 1) serverCommandSource.sendSuccess(Component.translatable("commands.origin.random.success.single", targets.iterator().next().getDisplayName().getString(), origin.value().getName(), layerHolder.get().value().name()), false);
+				if (targets.size() > 1) serverCommandSource.sendSuccess(() -> Component.translatable("commands.origin.random.success.multiple", targets.size(), layerHolder.get().value().name()), true);
+				else if (targets.size() == 1) {
+                    Holder<Origin> finalOrigin = origin;
+                    serverCommandSource.sendSuccess(() -> Component.translatable("commands.origin.random.success.single", targets.iterator().next().getDisplayName().getString(), finalOrigin.value().getName(), layerHolder.get().value().name()), false);
+                }
 
 				return targets.size();
 			}
@@ -302,7 +310,7 @@ public class OriginCommand {
 			}
 		}
 
-		serverCommandSource.sendSuccess(Component.translatable("commands.origin.random.all", targets.size(), originLayers.size()), false);
+		serverCommandSource.sendSuccess(() -> Component.translatable("commands.origin.random.all", targets.size(), originLayers.size()), false);
 		return targets.size();
 
 	}

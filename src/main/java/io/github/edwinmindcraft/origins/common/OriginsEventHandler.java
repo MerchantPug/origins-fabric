@@ -10,6 +10,7 @@ import io.github.apace100.origins.origin.OriginLayers;
 import io.github.apace100.origins.origin.OriginRegistry;
 import io.github.apace100.origins.power.OriginsPowerTypes;
 import io.github.apace100.origins.registry.ModDamageSources;
+import io.github.apace100.origins.registry.ModItems;
 import io.github.edwinmindcraft.apoli.api.component.IPowerContainer;
 import io.github.edwinmindcraft.apoli.api.power.configuration.ConfiguredPower;
 import io.github.edwinmindcraft.calio.api.event.CalioDynamicRegistryEvent;
@@ -34,12 +35,10 @@ import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraftforge.common.ForgeMod;
 import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.event.AttachCapabilitiesEvent;
-import net.minecraftforge.event.OnDatapackSyncEvent;
-import net.minecraftforge.event.RegisterCommandsEvent;
-import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.*;
 import net.minecraftforge.event.entity.player.AdvancementEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
@@ -141,7 +140,7 @@ public class OriginsEventHandler {
 
 	@SubscribeEvent
 	public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
-		if (event.getEntity() instanceof ServerPlayer sp && !event.getEntity().level.isClientSide())
+		if (event.getEntity() instanceof ServerPlayer sp && !event.getEntity().level().isClientSide())
 			Objects.requireNonNull(sp.getServer()).submitAsync(() -> IOriginContainer.get(sp).ifPresent(container -> {
 				if (!container.hasAllOrigins()) {
 					container.checkAutoChoosingLayers(true);
@@ -157,7 +156,7 @@ public class OriginsEventHandler {
 
 	@SubscribeEvent
 	public static void onStartTracking(PlayerEvent.StartTracking event) {
-		if (event.getTarget() instanceof Player target && event.getEntity() instanceof ServerPlayer sp && !event.getEntity().level.isClientSide())
+		if (event.getTarget() instanceof Player target && event.getEntity() instanceof ServerPlayer sp && !event.getEntity().level().isClientSide())
 			Objects.requireNonNull(sp.getServer()).submitAsync(() -> IOriginContainer.get(target).ifPresent(x -> OriginsCommon.CHANNEL.send(PacketDistributor.PLAYER.with(() -> sp), x.getSynchronizationPacket())));
 	}
 
@@ -198,9 +197,9 @@ public class OriginsEventHandler {
 								double f = player.getRandom().nextDouble() - player.getRandom().nextDouble();
 								double g = player.getRandom().nextDouble() - player.getRandom().nextDouble();
 								double h = player.getRandom().nextDouble() - player.getRandom().nextDouble();
-								player.level.addParticle(ParticleTypes.BUBBLE, player.getRandomX(0.5), player.getEyeY() + player.getRandom().nextGaussian() * 0.08D, player.getRandomZ(0.5), f * 0.5F, g * 0.5F + 0.25F, h * 0.5F);
+								player.level().addParticle(ParticleTypes.BUBBLE, player.getRandomX(0.5), player.getEyeY() + player.getRandom().nextGaussian() * 0.08D, player.getRandomZ(0.5), f * 0.5F, g * 0.5F + 0.25F, h * 0.5F);
 							}
-							player.hurt(ModDamageSources.NO_WATER_FOR_GILLS, 2.0F);
+							player.hurt(ModDamageSources.getSource(player.damageSources(), ModDamageSources.NO_WATER_FOR_GILLS), 2.0F);
 						}
 					} else {
 						int landGain = increaseAirSupply(player, 0);
@@ -239,4 +238,11 @@ public class OriginsEventHandler {
 			}
 		}
 	}
+
+    @SubscribeEvent
+    public static void modifyCreativeTabs(BuildCreativeModeTabContentsEvent event) {
+        if (event.getTabKey() == CreativeModeTabs.TOOLS_AND_UTILITIES) {
+            event.accept(ModItems.ORB_OF_ORIGIN);
+        }
+    }
 }

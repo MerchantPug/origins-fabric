@@ -35,7 +35,7 @@ public record C2SChooseOrigin(ResourceLocation layer, ResourceLocation origin) {
 			ServerPlayer sender = contextSupplier.get().getSender();
 			if (sender == null) return;
 			IOriginContainer.get(sender).ifPresent(container -> {
-				Optional<Holder<OriginLayer>> layer = OriginsAPI.getLayersRegistry().getHolder(ResourceKey.create(OriginsDynamicRegistries.LAYERS_REGISTRY, this.layer())).filter(Holder::isBound);
+				Optional<Holder.Reference<OriginLayer>> layer = OriginsAPI.getLayersRegistry().getHolder(ResourceKey.create(OriginsDynamicRegistries.LAYERS_REGISTRY, this.layer())).filter(Holder::isBound);
 				if (layer.isEmpty()) {
 					Origins.LOGGER.warn("Player {} tried to select an origin for missing layer {}", sender.getScoreboardName(), this.layer());
 					return;
@@ -44,7 +44,7 @@ public record C2SChooseOrigin(ResourceLocation layer, ResourceLocation origin) {
 					Origins.LOGGER.warn("Player {} tried to choose origin for layer {} while having one already.", sender.getScoreboardName(), this.layer());
 					return;
 				}
-				Optional<Holder<Origin>> origin = OriginsAPI.getOriginsRegistry().getHolder(ResourceKey.create(OriginsDynamicRegistries.ORIGINS_REGISTRY, this.origin())).filter(Holder::isBound);
+				Optional<Holder.Reference<Origin>> origin = OriginsAPI.getOriginsRegistry().getHolder(ResourceKey.create(OriginsDynamicRegistries.ORIGINS_REGISTRY, this.origin())).filter(Holder::isBound);
 				if (origin.isEmpty()) {
 					Origins.LOGGER.warn("Player {} chose unknown origin: {} for layer {}", sender.getScoreboardName(), this.origin(), this.layer());
 					return;

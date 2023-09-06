@@ -5,6 +5,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import io.github.edwinmindcraft.origins.api.capabilities.IOriginContainer;
 import io.github.edwinmindcraft.origins.api.origin.OriginLayer;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.Holder;
 import net.minecraft.network.chat.Component;
@@ -52,20 +53,20 @@ public class WaitForNextLayerScreen extends Screen {
 	}
 
 	@Override
-	public void render(@NotNull PoseStack matrices, int mouseX, int mouseY, float delta) {
+	public void render(@NotNull GuiGraphics graphics, int mouseX, int mouseY, float delta) {
 		if (this.maxSelection == 0) {
 			this.openSelection();
 			return;
 		}
-		this.renderBackground(matrices);
+		this.renderBackground(graphics);
 	}
 
 	@Override
-	public void renderBackground(@NotNull PoseStack matrices, int vOffset) {
+	public void renderBackground(@NotNull GuiGraphics graphics) {
 		if (this.showDirtBackground) {
-			super.renderDirtBackground(vOffset);
+			super.renderDirtBackground(graphics);
 		} else {
-			super.renderBackground(matrices, vOffset);
+			super.renderBackground(graphics);
 		}
 	}
 }

@@ -5,6 +5,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import io.github.apace100.origins.Origins;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.Gui;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
 import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.core.NonNullList;
@@ -40,24 +41,23 @@ public class CraftingRecipeTooltipComponent implements ClientTooltipComponent {
 	}
 
 	@Override
-	public void renderImage(@NotNull Font pFont, int pMouseX, int pMouseY, @NotNull PoseStack pPoseStack, @NotNull ItemRenderer pItemRenderer, int pBlitOffset) {
-		this.drawBackGround(pPoseStack, pMouseX, pMouseY, pBlitOffset);
+	public void renderImage(@NotNull Font pFont, int pMouseX, int pMouseY, @NotNull GuiGraphics pGuiGraphics) {
+		this.drawBackGround(pGuiGraphics, pMouseX, pMouseY);
 		for (int column = 0; column < 3; ++column) {
 			for (int row = 0; row < 3; ++row) {
 				int index = column + row * 3;
 				int slotX = pMouseX + 8 + column * 18;
 				int slotY = pMouseY + 8 + row * 18;
 				ItemStack stack = this.inputs.get(index);
-				pItemRenderer.renderAndDecorateItem(stack, slotX, slotY, index);
-				pItemRenderer.renderGuiItemDecorations(pFont, stack, slotX, slotY);
+                pGuiGraphics.renderItem(stack, slotX, slotY, index);
+                pGuiGraphics.renderTooltip(pFont, stack, slotX, slotY);
 			}
 		}
-		pItemRenderer.renderAndDecorateItem(this.output, pMouseX + 101, pMouseY + 25, 10);
+        pGuiGraphics.renderItem(this.output, pMouseX + 101, pMouseY + 25, 10);
 	}
 
-	public void drawBackGround(PoseStack matrices, int x, int y, int z) {
+	public void drawBackGround(GuiGraphics graphics, int x, int y) {
 		RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-		RenderSystem.setShaderTexture(0, TEXTURE);
-		Gui.blit(matrices, x, y, z, 0, 0, 130, 86, 256, 256);
+		graphics.blit(TEXTURE, x, y, 0, 0, 130, 86, 256, 256);
 	}
 }

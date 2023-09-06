@@ -32,7 +32,7 @@ import java.util.Objects;
 public class OrbOfOriginItem extends Item {
 
 	public OrbOfOriginItem() {
-		super(new Item.Properties().stacksTo(1).tab(CreativeModeTab.TAB_MISC).rarity(Rarity.RARE));
+		super(new Item.Properties().stacksTo(1).rarity(Rarity.RARE));
 	}
 
 	@Override

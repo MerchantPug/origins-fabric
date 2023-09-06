@@ -3,8 +3,8 @@ package io.github.apace100.origins.entity;
 import io.github.apace100.origins.registry.ModEntities;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -55,15 +55,15 @@ public class EnderianPearlEntity extends ThrownEnderpearl {
 
 
 		for (int i = 0; i < 32; ++i) {
-			this.level.addParticle(ParticleTypes.PORTAL, this.getX(), this.getY() + this.random.nextDouble() * 2.0D, this.getZ(), this.random.nextGaussian(), 0.0D, this.random.nextGaussian());
+			this.level().addParticle(ParticleTypes.PORTAL, this.getX(), this.getY() + this.random.nextDouble() * 2.0D, this.getZ(), this.random.nextGaussian(), 0.0D, this.random.nextGaussian());
 		}
 
-		if (!this.level.isClientSide && !this.isRemoved()) {
+		if (!this.level().isClientSide && !this.isRemoved()) {
 			Entity entity = this.getOwner();
 			if (entity instanceof ServerPlayer serverplayer) {
 				//Origins: No damage from enderian pearls.
 				//Origins: Disable Endermite spawning.
-				if (serverplayer.connection.getConnection().isConnected() && serverplayer.level == this.level && !serverplayer.isSleeping()) {
+				if (serverplayer.connection.isAcceptingMessages() && serverplayer.level() == this.level() && !serverplayer.isSleeping()) {
 					EntityTeleportEvent.EnderPearl event = ForgeEventFactory.onEnderPearlLand(serverplayer, this.getX(), this.getY(), this.getZ(), this, 0.0F, result);
 					if (!event.isCanceled()) {
 						if (entity.isPassenger())
@@ -74,7 +74,7 @@ public class EnderianPearlEntity extends ThrownEnderpearl {
 						entity.teleportTo(event.getTargetX(), event.getTargetY(), event.getTargetZ());
 						entity.fallDistance = 0.0F;
 						if (event.getAttackDamage() > 0)
-							entity.hurt(DamageSource.FALL, event.getAttackDamage());
+							entity.hurt(entity.damageSources().fall(), event.getAttackDamage());
 					}
 				}
 			} else if (entity != null) {
@@ -87,7 +87,7 @@ public class EnderianPearlEntity extends ThrownEnderpearl {
 	}
 
 	@Override
-	public @NotNull Packet<?> getAddEntityPacket() {
+	public @NotNull Packet<ClientGamePacketListener> getAddEntityPacket() {
 		return NetworkHooks.getEntitySpawningPacket(this);
 	}
 }

@@ -30,13 +30,13 @@ This mod adds several origins with passive abilities to the game, which you can 
 [[dependencies.origins]]
     modId="calio"
     mandatory=true
-    versionRange="[1.18.1-1.4,)"
+    versionRange="[1.20.1-1.11,)"
     ordering="NONE"
     side="BOTH"
 
 [[dependencies.origins]]
     modId="apoli"
     mandatory=true
-    versionRange="[1.18.1-2.2,)"
+    versionRange="[1.20.1-2.9,)"
     ordering="NONE"
     side="BOTH"

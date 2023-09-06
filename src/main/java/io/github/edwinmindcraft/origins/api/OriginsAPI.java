@@ -6,6 +6,7 @@ import io.github.edwinmindcraft.origins.api.origin.Origin;
 import io.github.edwinmindcraft.origins.api.origin.OriginLayer;
 import io.github.edwinmindcraft.origins.api.registry.OriginsDynamicRegistries;
 import net.minecraft.core.Holder;
+import net.minecraft.core.MappedRegistry;
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
@@ -29,22 +30,22 @@ public class OriginsAPI {
 	public static final Capability<IOriginContainer> ORIGIN_CONTAINER = CapabilityManager.get(new CapabilityToken<>() {});
 
 	@Contract(pure = true)
-	public static Registry<Origin> getOriginsRegistry(@Nullable MinecraftServer server) {
+	public static MappedRegistry<Origin> getOriginsRegistry(@Nullable MinecraftServer server) {
 		return CalioAPI.getDynamicRegistries(server).get(OriginsDynamicRegistries.ORIGINS_REGISTRY);
 	}
 
 	@Contract(pure = true)
-	public static Registry<Origin> getOriginsRegistry() {
+	public static MappedRegistry<Origin> getOriginsRegistry() {
 		return CalioAPI.getDynamicRegistries().get(OriginsDynamicRegistries.ORIGINS_REGISTRY);
 	}
 
 	@Contract(pure = true)
-	public static Registry<OriginLayer> getLayersRegistry(@Nullable MinecraftServer server) {
+	public static MappedRegistry<OriginLayer> getLayersRegistry(@Nullable MinecraftServer server) {
 		return CalioAPI.getDynamicRegistries(server).get(OriginsDynamicRegistries.LAYERS_REGISTRY);
 	}
 
 	@Contract(pure = true)
-	public static Registry<OriginLayer> getLayersRegistry() {
+	public static MappedRegistry<OriginLayer> getLayersRegistry() {
 		return CalioAPI.getDynamicRegistries().get(OriginsDynamicRegistries.LAYERS_REGISTRY);
 	}
 

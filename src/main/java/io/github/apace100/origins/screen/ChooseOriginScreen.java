@@ -1,6 +1,5 @@
 package io.github.apace100.origins.screen;
 
-import com.mojang.blaze3d.vertex.PoseStack;
 import io.github.apace100.origins.Origins;
 import io.github.apace100.origins.origin.Impact;
 import io.github.apace100.origins.registry.ModItems;
@@ -12,6 +11,7 @@ import io.github.edwinmindcraft.origins.common.OriginsCommon;
 import io.github.edwinmindcraft.origins.common.network.C2SChooseOrigin;
 import io.github.edwinmindcraft.origins.common.network.C2SChooseRandomOrigin;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.core.Holder;
 import net.minecraft.network.chat.Component;
@@ -83,18 +83,18 @@ public class ChooseOriginScreen extends OriginDisplayScreen {
 		this.guiLeft = (this.width - windowWidth) / 2;
 		this.guiTop = (this.height - windowHeight) / 2;
 		if (this.maxSelection > 1) {
-			this.addRenderableWidget(new Button(this.guiLeft - 40, this.height / 2 - 10, 20, 20, Component.literal("<"), b -> {
-				this.currentOrigin = (this.currentOrigin - 1 + this.maxSelection) % this.maxSelection;
-				Holder<Origin> newOrigin = this.getCurrentOriginInternal();
-				this.showOrigin(newOrigin, this.layerList.get(this.currentLayerIndex), newOrigin.value() == this.randomOrigin);
-			}));
-			this.addRenderableWidget(new Button(this.guiLeft + windowWidth + 20, this.height / 2 - 10, 20, 20, Component.literal(">"), b -> {
+			this.addRenderableWidget(Button.builder(Component.literal("<"),  b -> {
+                this.currentOrigin = (this.currentOrigin - 1 + this.maxSelection) % this.maxSelection;
+                Holder<Origin> newOrigin = this.getCurrentOriginInternal();
+                this.showOrigin(newOrigin, this.layerList.get(this.currentLayerIndex), newOrigin.value() == this.randomOrigin);
+            }).bounds(this.guiLeft - 40, this.height / 2 - 10, 20, 20).build());
+			this.addRenderableWidget(Button.builder(Component.literal(">"), b -> {
 				this.currentOrigin = (this.currentOrigin + 1) % this.maxSelection;
 				Holder<Origin> newOrigin = this.getCurrentOriginInternal();
 				this.showOrigin(newOrigin, this.layerList.get(this.currentLayerIndex), newOrigin.value() == this.randomOrigin);
-			}));
+			}).bounds(this.guiLeft + windowWidth + 20, this.height / 2 - 10, 20, 20).build());
 		}
-		this.addRenderableWidget(new Button(this.guiLeft + windowWidth / 2 - 50, this.guiTop + windowHeight + 5, 100, 20, Component.translatable(Origins.MODID + ".gui.select"), b -> {
+		this.addRenderableWidget(Button.builder(Component.translatable(Origins.MODID + ".gui.select"), b -> {
 			ResourceLocation layer = this.layerList.get(this.currentLayerIndex).unwrap().map(Optional::of, OriginsAPI.getLayersRegistry(null)::getResourceKey).map(ResourceKey::location).orElseThrow();
 			this.openNextLayerScreen();
 			if (this.currentOrigin == this.originSelection.size())
@@ -106,7 +106,7 @@ public class ChooseOriginScreen extends OriginDisplayScreen {
 				else
 					Origins.LOGGER.error("Unregistered origin found for layer {}: {}", layer, this.getCurrentOrigin());
 			}
-		}));
+		}).bounds(this.guiLeft + windowWidth / 2 - 50, this.guiTop + windowHeight + 5, 100, 20).build());
 	}
 
 	@Override
@@ -138,20 +138,20 @@ public class ChooseOriginScreen extends OriginDisplayScreen {
 	}
 
 	@Override
-	public void renderBackground(@NotNull PoseStack matrices, int vOffset) {
+	public void renderBackground(@NotNull GuiGraphics graphics) {
 		if (this.showDirtBackground) {
-			super.renderDirtBackground(vOffset);
+			super.renderDirtBackground(graphics);
 		} else {
-			super.renderBackground(matrices, vOffset);
+			super.renderBackground(graphics);
 		}
 	}
 
 	@Override
-	public void render(@NotNull PoseStack matrices, int mouseX, int mouseY, float delta) {
+	public void render(@NotNull GuiGraphics graphics, int mouseX, int mouseY, float delta) {
 		if (this.maxSelection == 0) {
 			this.openNextLayerScreen();
 			return;
 		}
-		super.render(matrices, mouseX, mouseY, delta);
+		super.render(graphics, mouseX, mouseY, delta);
 	}
 }

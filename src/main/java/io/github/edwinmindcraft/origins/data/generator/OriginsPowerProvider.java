@@ -7,6 +7,7 @@ import io.github.apace100.apoli.util.Comparison;
 import io.github.apace100.apoli.util.modifier.ModifierUtil;
 import io.github.apace100.origins.Origins;
 import io.github.apace100.origins.power.OriginsPowerTypes;
+import io.github.apace100.origins.registry.ModDamageSources;
 import io.github.apace100.origins.registry.ModEnchantments;
 import io.github.edwinmindcraft.apoli.api.configuration.*;
 import io.github.edwinmindcraft.apoli.api.generator.PowerGenerator;
@@ -173,11 +174,10 @@ public class OriginsPowerProvider extends PowerGenerator {
 		this.add("burning_wrath", ApoliPowers.MODIFY_DAMAGE_DEALT.get().configure(
 				new ModifyDamageDealtConfiguration(ModifierUtil.fromAttributeModifier(new AttributeModifier("Additional damage while on fire", 3, AttributeModifier.Operation.ADDITION))),
 				PowerData.builder().addCondition(ApoliEntityConditions.ON_FIRE.get().configure(NoConfiguration.INSTANCE)).build()));
-		DamageSource waterDamage = new DamageSource("hurt_by_water").bypassArmor().bypassMagic();
 		this.add("damage_from_potions", ApoliPowers.ACTION_ON_ITEM_USE.get().configure(
 				new ActionOnItemUseConfiguration(
 						Holder.direct(ApoliItemConditions.INGREDIENT.get().configure(new FieldConfiguration<>(Ingredient.of(Items.POTION)))),
-						Holder.direct(ApoliEntityActions.DAMAGE.get().configure(new DamageConfiguration(waterDamage, 2.0F))),
+						Holder.direct(ApoliEntityActions.DAMAGE.get().configure(new DamageConfiguration(Optional.of(ModDamageSources.NO_WATER_FOR_GILLS), Optional.empty(), 2.0F))),
 						ApoliDefaultActions.ITEM_DEFAULT.getHolder().orElseThrow()
 				), hidden
 		));
@@ -198,7 +198,7 @@ public class OriginsPowerProvider extends PowerGenerator {
 		this.add("hotblooded", ApoliPowers.EFFECT_IMMUNITY.get().configure(new EffectImmunityConfiguration(ListConfiguration.of(MobEffects.POISON, MobEffects.HUNGER), false), PowerData.DEFAULT));
 		this.add("nether_spawn", ApoliPowers.MODIFY_PLAYER_SPAWN.get().configure(new ModifyPlayerSpawnConfiguration(Level.NETHER, 0.125F, null, "center", null, null), PowerData.DEFAULT));
 		this.add("water_vulnerability", ApoliPowers.DAMAGE_OVER_TIME.get().configure(
-				new DamageOverTimeConfiguration(20, 1, 1, 2, waterDamage, ModEnchantments.WATER_PROTECTION.get(), 1.0F),
+				new DamageOverTimeConfiguration(20, 1, 1, 2, ModDamageSources.NO_WATER_FOR_GILLS, null, ModEnchantments.WATER_PROTECTION.get(), 1.0F),
 				PowerData.builder()
 						.addCondition(ApoliEntityConditions.or(
 								ApoliEntityConditions.FLUID_HEIGHT.get().configure(new FluidTagComparisonConfiguration(new DoubleComparisonConfiguration(Comparison.GREATER_THAN, 0.0), FluidTags.WATER)),

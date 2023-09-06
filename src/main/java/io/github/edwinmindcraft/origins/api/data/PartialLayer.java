@@ -73,7 +73,7 @@ public record PartialLayer(@Nullable Integer order,
 				this.allowRandom() != null ? this.allowRandom() : false,
 				this.allowRandomUnchoosable() != null ? this.allowRandomUnchoosable() : false,
 				ImmutableSet.copyOf(this.excludeRandom()),
-				OriginsAPI.getOriginsRegistry().getOrCreateHolderOrThrow(this.defaultOrigin() == null ? Objects.requireNonNull(OriginRegisters.EMPTY.getKey()) : ResourceKey.create(OriginsDynamicRegistries.ORIGINS_REGISTRY, this.defaultOrigin())),
+				OriginsAPI.getOriginsRegistry().getHolderOrThrow(this.defaultOrigin() == null ? Objects.requireNonNull(OriginRegisters.EMPTY.getKey()) : ResourceKey.create(OriginsDynamicRegistries.ORIGINS_REGISTRY, this.defaultOrigin())),
 				this.autoChoose() != null ? this.autoChoose() : false,
 				this.hidden() != null ? this.hidden() : false,
 				this.title() != null ? this.title().create(registryName) : GuiTitle.DEFAULT

@@ -9,7 +9,7 @@ import net.minecraftforge.common.data.ExistingFileHelper;
 
 public class OriginsBlockStateProvider extends BlockStateProvider {
 	public OriginsBlockStateProvider(DataGenerator gen, ExistingFileHelper exFileHelper) {
-		super(gen, Origins.MODID, exFileHelper);
+		super(gen.getPackOutput(), Origins.MODID, exFileHelper);
 	}
 
 	@Override
