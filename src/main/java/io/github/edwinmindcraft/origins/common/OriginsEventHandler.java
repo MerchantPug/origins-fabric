@@ -199,7 +199,7 @@ public class OriginsEventHandler {
 								double h = player.getRandom().nextDouble() - player.getRandom().nextDouble();
 								player.level().addParticle(ParticleTypes.BUBBLE, player.getRandomX(0.5), player.getEyeY() + player.getRandom().nextGaussian() * 0.08D, player.getRandomZ(0.5), f * 0.5F, g * 0.5F + 0.25F, h * 0.5F);
 							}
-							player.hurt(ModDamageSources.getSource(player.damageSources(), ModDamageSources.NO_WATER_FOR_GILLS), 2.0F);
+							player.hurt(player.damageSources().source(ModDamageSources.NO_WATER_FOR_GILLS), 2.0F);
 						}
 					} else {
 						int landGain = increaseAirSupply(player, 0);
