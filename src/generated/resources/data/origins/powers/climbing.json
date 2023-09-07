@@ -19,11 +19,13 @@
       "conditions": [
         {
           "type": "apoli:block_collision",
+          "block_condition": "apoli:allow",
           "offset_x": -0.01,
           "offset_z": -0.01
         },
         {
           "type": "apoli:block_collision",
+          "block_condition": "apoli:allow",
           "offset_x": 0.01,
           "offset_z": 0.01
         }

@@ -19,8 +19,7 @@
       ]
     },
     "modifier": {
-      "name": "Unnamed attribute modifier",
-      "operation": "multiply_total",
+      "operation": "apoli:multiply_total_multiplicative",
       "value": 4.0
     }
   },
@@ -44,8 +43,7 @@
       ]
     },
     "modifier": {
-      "name": "Unnamed attribute modifier",
-      "operation": "multiply_total",
+      "operation": "apoli:multiply_total_multiplicative",
       "value": 4.0
     }
   }

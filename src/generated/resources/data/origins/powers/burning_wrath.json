@@ -7,8 +7,7 @@
   },
   "damage_condition": "apoli:allow",
   "modifier": {
-    "name": "Additional damage while on fire",
-    "operation": "addition",
+    "operation": "apoli:add_base_early",
     "value": 3.0
   },
   "self_action": "apoli:nothing",

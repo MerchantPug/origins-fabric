@@ -29,6 +29,10 @@
       }
     ]
   },
+  "modifier": {
+    "operation": "apoli:set_total",
+    "value": 0.01
+  },
   "take_fall_damage": false,
   "velocity": 0.01
 }
