@@ -22,6 +22,7 @@ import io.github.edwinmindcraft.apoli.api.registry.ApoliBuiltinRegistries;
 import io.github.edwinmindcraft.apoli.common.action.configuration.DamageConfiguration;
 import io.github.edwinmindcraft.apoli.common.action.configuration.GiveConfiguration;
 import io.github.edwinmindcraft.apoli.common.action.configuration.PlaySoundConfiguration;
+import io.github.edwinmindcraft.apoli.common.condition.configuration.BlockCollisionConfiguration;
 import io.github.edwinmindcraft.apoli.common.condition.configuration.EnchantmentConfiguration;
 import io.github.edwinmindcraft.apoli.common.condition.configuration.FluidTagComparisonConfiguration;
 import io.github.edwinmindcraft.apoli.common.condition.meta.ConditionStreamConfiguration;
@@ -133,8 +134,8 @@ public class OriginsPowerProvider extends PowerGenerator {
 				ImmutableMap.of(
 						"toggle", ApoliPowers.TOGGLE.get().configure(new TogglePowerConfiguration.Impl(true, IActivePower.Key.PRIMARY, false), PowerData.DEFAULT),
 						"climbing", ApoliPowers.CLIMBING.get().configure(new ClimbingConfiguration(true, Holder.direct(ApoliEntityConditions.or(
-								ApoliEntityConditions.BLOCK_COLLISION.get().configure(FieldConfiguration.of(new Vec3(-0.01, 0, -0.01))),
-								ApoliEntityConditions.BLOCK_COLLISION.get().configure(FieldConfiguration.of(new Vec3(0.01, 0, 0.01)))
+								ApoliEntityConditions.BLOCK_COLLISION.get().configure(new BlockCollisionConfiguration(new Vec3(-0.01, 0, -0.01), ApoliDefaultConditions.BLOCK_DEFAULT.getHolder().orElseThrow())),
+								ApoliEntityConditions.BLOCK_COLLISION.get().configure(new BlockCollisionConfiguration(new Vec3(0.01, 0, 0.01), ApoliDefaultConditions.BLOCK_DEFAULT.getHolder().orElseThrow()))
 						))), PowerData.builder().addCondition(ApoliEntityConditions.and(
 								ApoliEntityConditions.POWER_ACTIVE.get().configure(new PowerReference(Origins.identifier("climbing_toggle"))),
 								ApoliEntityConditions.COLLIDED_HORIZONTALLY.get().configure(NoConfiguration.INSTANCE)
@@ -239,7 +240,7 @@ public class OriginsPowerProvider extends PowerGenerator {
 				new StackingStatusEffectConfiguration(ListConfiguration.of(
 						new MobEffectInstance(MobEffects.WEAKNESS, 100, 0, true, false, true),
 						new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 100, 0, true, false, true)),
-						-20, 361, 10), PowerData.builder().addCondition(ApoliEntityConditions.BLOCK_COLLISION.get().configure(new FieldConfiguration<>(new Vec3(0, 1, 0)))).build())
+						-20, 361, 10), PowerData.builder().addCondition(ApoliEntityConditions.BLOCK_COLLISION.get().configure(new BlockCollisionConfiguration(new Vec3(0, 1, 0), ApoliDefaultConditions.BLOCK_DEFAULT.getHolder().orElseThrow()))).build())
 		);
 	}
 }
