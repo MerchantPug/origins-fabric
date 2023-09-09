@@ -178,7 +178,9 @@ public class OriginsPowerProvider extends PowerGenerator {
 				new ActionOnItemUseConfiguration(
 						Holder.direct(ApoliItemConditions.INGREDIENT.get().configure(new FieldConfiguration<>(Ingredient.of(Items.POTION)))),
 						Holder.direct(ApoliEntityActions.DAMAGE.get().configure(new DamageConfiguration(Optional.of(ModDamageSources.NO_WATER_FOR_GILLS), Optional.empty(), 2.0F))),
-						ApoliDefaultActions.ITEM_DEFAULT.getHolder().orElseThrow()
+						ApoliDefaultActions.ITEM_DEFAULT.getHolder().orElseThrow(),
+                        ActionOnItemUseConfiguration.TriggerType.FINISH,
+                        0
 				), hidden
 		));
 		this.add("damage_from_snowballs", ApoliPowers.MODIFY_DAMAGE_TAKEN.get().configure(
@@ -228,7 +230,7 @@ public class OriginsPowerProvider extends PowerGenerator {
 		this.add("conduit_power_on_land", OriginsPowerTypes.CONDUIT_POWER_ON_LAND.get().configure(NoConfiguration.INSTANCE, hidden));
 
 		this.add("aerial_combatant", ApoliPowers.MODIFY_DAMAGE_DEALT.get().configure(new ModifyDamageDealtConfiguration(ModifierUtil.fromAttributeModifier(new AttributeModifier("Extra damage while fall flying", 1, AttributeModifier.Operation.MULTIPLY_BASE))), PowerData.builder().addCondition(ApoliEntityConditions.FALL_FLYING.get().configure(NoConfiguration.INSTANCE)).build()));
-		this.add("air_from_potions", ApoliPowers.ACTION_ON_ITEM_USE.get().configure(new ActionOnItemUseConfiguration(Holder.direct(ApoliItemConditions.INGREDIENT.get().configure(FieldConfiguration.of(Ingredient.of(Items.POTION)))), Holder.direct(ApoliEntityActions.GAIN_AIR.get().configure(FieldConfiguration.of(60))), ApoliDefaultActions.ITEM_DEFAULT.getHolder().orElseThrow(RuntimeException::new)), hidden));
+		this.add("air_from_potions", ApoliPowers.ACTION_ON_ITEM_USE.get().configure(new ActionOnItemUseConfiguration(Holder.direct(ApoliItemConditions.INGREDIENT.get().configure(FieldConfiguration.of(Ingredient.of(Items.POTION)))), Holder.direct(ApoliEntityActions.GAIN_AIR.get().configure(FieldConfiguration.of(60))), ApoliDefaultActions.ITEM_DEFAULT.getHolder().orElseThrow(RuntimeException::new), ActionOnItemUseConfiguration.TriggerType.FINISH, 0), hidden));
 		this.add("aqua_affinity", ApoliPowers.MULTIPLE.get().configure(new MultipleConfiguration<>(makeAquaAffinity()), PowerData.DEFAULT));
 		this.add("aquatic", ApoliPowers.ENTITY_GROUP.get().configure(FieldConfiguration.of(MobType.WATER), hidden));
 		this.add("arcane_skin", ApoliPowers.MODEL_COLOR.get().configure(new ColorConfiguration(0.5F, 0.5F, 1.0F, 0.7F), PowerData.DEFAULT));
