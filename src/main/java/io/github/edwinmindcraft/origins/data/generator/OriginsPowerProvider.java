@@ -73,7 +73,7 @@ public class OriginsPowerProvider extends PowerGenerator {
 								new ModifyValueBlockConfiguration(ListConfiguration.of(ModifierUtil.fromAttributeModifier(new AttributeModifier(UUID.randomUUID(), "Unnamed attribute modifier", 4, AttributeModifier.Operation.MULTIPLY_TOTAL))), allow),
 								PowerData.builder().addCondition(ApoliEntityConditions.and(
 										ApoliEntityConditions.SUBMERGED_IN.get().configure(new TagConfiguration<>(FluidTags.WATER)),
-										ApoliEntityConditions.ENCHANTMENT.get().configure(new EnchantmentConfiguration(new IntegerComparisonConfiguration(Comparison.EQUAL, 0), Enchantments.AQUA_AFFINITY, EnchantmentConfiguration.Calculation.SUM))
+										ApoliEntityConditions.ENCHANTMENT.get().configure(new EnchantmentConfiguration(new IntegerComparisonConfiguration(Comparison.EQUAL, 0), Optional.of(Enchantments.AQUA_AFFINITY), EnchantmentConfiguration.Calculation.SUM))
 								)).build())));
 		builder.put("ungrounded", Holder.direct(
 				ApoliPowers.MODIFY_BREAK_SPEED.get()
