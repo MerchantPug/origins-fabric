@@ -25,6 +25,7 @@ import io.github.edwinmindcraft.apoli.common.action.configuration.PlaySoundConfi
 import io.github.edwinmindcraft.apoli.common.condition.configuration.BlockCollisionConfiguration;
 import io.github.edwinmindcraft.apoli.common.condition.configuration.EnchantmentConfiguration;
 import io.github.edwinmindcraft.apoli.common.condition.configuration.FluidTagComparisonConfiguration;
+import io.github.edwinmindcraft.apoli.common.condition.configuration.ProjectileConfiguration;
 import io.github.edwinmindcraft.apoli.common.condition.meta.ConditionStreamConfiguration;
 import io.github.edwinmindcraft.apoli.common.power.configuration.*;
 import io.github.edwinmindcraft.apoli.common.registry.ApoliPowers;
@@ -186,7 +187,7 @@ public class OriginsPowerProvider extends PowerGenerator {
 		this.add("damage_from_snowballs", ApoliPowers.MODIFY_DAMAGE_TAKEN.get().configure(
 				new ModifyDamageTakenConfiguration(
 						ListConfiguration.of(ModifierUtil.fromAttributeModifier(new AttributeModifier("Snowball damage taken like Blazes", 3, AttributeModifier.Operation.ADDITION))),
-						Holder.direct(ApoliDamageConditions.PROJECTILE.get().configure(FieldConfiguration.of(Optional.of(EntityType.SNOWBALL)))),
+						Holder.direct(ApoliDamageConditions.PROJECTILE.get().configure(new ProjectileConfiguration(Optional.of(EntityType.SNOWBALL), ApoliDefaultConditions.ENTITY_DEFAULT.getHolder().orElseThrow()))),
 						ApoliDefaultConditions.BIENTITY_DEFAULT.getHolder().orElseThrow(),
 						ApoliDefaultActions.ENTITY_DEFAULT.getHolder().orElseThrow(),
 						ApoliDefaultActions.ENTITY_DEFAULT.getHolder().orElseThrow(),
