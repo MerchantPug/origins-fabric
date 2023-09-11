@@ -11,6 +11,7 @@ import io.github.apace100.origins.data.OriginsDataTypes;
 import io.github.apace100.origins.origin.Impact;
 import io.github.edwinmindcraft.apoli.api.power.configuration.ConfiguredPower;
 import io.github.edwinmindcraft.apoli.api.registry.ApoliDynamicRegistries;
+import io.github.edwinmindcraft.apoli.common.ApoliEventHandler;
 import io.github.edwinmindcraft.calio.api.CalioAPI;
 import io.github.edwinmindcraft.calio.api.network.CalioCodecHelper;
 import io.github.edwinmindcraft.calio.api.network.CodecSet;
@@ -115,11 +116,11 @@ public class Origin {
     }
 
     public int getPowerAmount() {
-        return (int) this.powers.stream().flatMap(HolderSet::stream).count();
+        return (int) this.powers.stream().flatMap(HolderSet::stream).filter(holder -> holder.unwrapKey().isPresent() && !ApoliEventHandler.isPowerDisabled(holder.unwrapKey().get().location())).count();
     }
 
     public Stream<Holder<ConfiguredPower<?, ?>>> getValidPowers() {
-        return this.powers.stream().flatMap(HolderSet::stream).filter(Holder::isBound);
+        return this.powers.stream().flatMap(HolderSet::stream).filter(holder -> holder.unwrapKey().isPresent() && !ApoliEventHandler.isPowerDisabled(holder.unwrapKey().get().location()));
     }
 
     public ItemStack getIcon() {

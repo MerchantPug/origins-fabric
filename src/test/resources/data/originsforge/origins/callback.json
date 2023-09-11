@@ -1,6 +1,7 @@
 {
   "powers": [
-    "apoliforge:callback"
+    "apoliforge:callback",
+    "apoliforge:conditional_all"
   ],
 	"icon": {
 		"item": "minecraft:diamond"
