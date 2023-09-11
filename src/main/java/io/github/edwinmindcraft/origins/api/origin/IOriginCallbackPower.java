@@ -7,9 +7,9 @@ import net.minecraft.world.entity.Entity;
 
 public interface IOriginCallbackPower<T extends IDynamicFeatureConfiguration> {
 	@SuppressWarnings("unchecked")
-	static <C extends IDynamicFeatureConfiguration, F extends PowerFactory<C>> void onChosen(ConfiguredPower<C, F> power, Entity living, boolean isOrb) {
+	default <F extends PowerFactory<T>> void onChosen(ConfiguredPower<T, F> power, Entity living, boolean isOrb) {
 		if (power.getFactory() instanceof IOriginCallbackPower)
-			((IOriginCallbackPower<C>) power.getFactory()).onChosen(power.getConfiguration(), living, isOrb);
+			((IOriginCallbackPower<T>) power.getFactory()).onChosen(power.getConfiguration(), living, isOrb);
 	}
 
 	void onChosen(T configuration, Entity entity, boolean isOrb);

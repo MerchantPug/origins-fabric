@@ -199,7 +199,7 @@ public class OriginsPowerProvider extends PowerGenerator {
 		this.add("fire_immunity", ApoliPowers.INVULNERABILITY.get().configure(HolderConfiguration.of(Holder.direct(ApoliDamageConditions.FIRE.get().configure(NoConfiguration.INSTANCE))), PowerData.DEFAULT));
 		this.add("flame_particles", ApoliPowers.PARTICLE.get().configure(new ParticleConfiguration(ParticleTypes.FLAME, 4, false, new Vec3(0.25, 0.5, 0.25), 1.0F, 1, false, 0), hidden));
 		this.add("hotblooded", ApoliPowers.EFFECT_IMMUNITY.get().configure(new EffectImmunityConfiguration(ListConfiguration.of(MobEffects.POISON, MobEffects.HUNGER), false), PowerData.DEFAULT));
-		this.add("nether_spawn", ApoliPowers.MODIFY_PLAYER_SPAWN.get().configure(new ModifyPlayerSpawnConfiguration(Level.NETHER, 0.125F, null, "center", null, null), PowerData.DEFAULT));
+		this.add("nether_spawn", ApoliPowers.MODIFY_PLAYER_SPAWN.get().configure(new ModifyPlayerSpawnConfiguration(Level.NETHER, 0.125F, null, ModifyPlayerSpawnConfiguration.SpawnStrategy.CENTER, null, null), PowerData.DEFAULT));
 		this.add("water_vulnerability", ApoliPowers.DAMAGE_OVER_TIME.get().configure(
 				new DamageOverTimeConfiguration(20, 1, 1, 2, ModDamageSources.NO_WATER_FOR_GILLS, null, ModEnchantments.WATER_PROTECTION.get(), 1.0F),
 				PowerData.builder()
