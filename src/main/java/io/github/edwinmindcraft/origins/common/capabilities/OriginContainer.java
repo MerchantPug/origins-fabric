@@ -2,15 +2,14 @@ package io.github.edwinmindcraft.origins.common.capabilities;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import io.github.apace100.origins.Origins;
 import io.github.apace100.origins.component.OriginComponent;
 import io.github.apace100.origins.component.PlayerOriginComponent;
 import io.github.apace100.origins.util.ChoseOriginCriterion;
 import io.github.edwinmindcraft.apoli.api.ApoliAPI;
-import io.github.edwinmindcraft.apoli.api.IDynamicFeatureConfiguration;
 import io.github.edwinmindcraft.apoli.api.component.IPowerContainer;
 import io.github.edwinmindcraft.apoli.api.power.configuration.ConfiguredPower;
-import io.github.edwinmindcraft.apoli.api.power.factory.PowerFactory;
 import io.github.edwinmindcraft.calio.api.registry.ICalioDynamicRegistryManager;
 import io.github.edwinmindcraft.origins.api.OriginsAPI;
 import io.github.edwinmindcraft.origins.api.capabilities.IOriginContainer;
@@ -19,6 +18,7 @@ import io.github.edwinmindcraft.origins.api.origin.Origin;
 import io.github.edwinmindcraft.origins.api.origin.OriginLayer;
 import io.github.edwinmindcraft.origins.api.registry.OriginsDynamicRegistries;
 import io.github.edwinmindcraft.origins.common.OriginsCommon;
+import io.github.edwinmindcraft.origins.common.network.S2COpenWaitingForPowersScreen;
 import io.github.edwinmindcraft.origins.common.network.S2CSynchronizeOrigin;
 import io.github.edwinmindcraft.origins.common.registry.OriginRegisters;
 import net.minecraft.core.Direction;
@@ -248,25 +248,43 @@ public class OriginContainer implements IOriginContainer, ICapabilitySerializabl
 	}
 
 	@Override
+    @SuppressWarnings({"rawtypes", "unchecked"})
 	public void onChosen(@NotNull ResourceKey<Origin> origin, boolean isOrb) {
+        Set<ResourceKey<ConfiguredPower<?, ?>>> set = Sets.newHashSet();
         IPowerContainer.get(this.player).ifPresent(container -> container.getPowersFromSource(OriginsAPI.getPowerSource(origin)).stream()
-            .map(container::getPower)
-            .filter(Objects::nonNull)
-            .forEach(power -> {
-            if (power.isBound() && power.value().getFactory() instanceof IOriginCallbackPower callbackPower) {
-                callbackPower.onChosen(power.value(), this.player, isOrb);
-            }
-        }));
-	}
+                .map(container::getPower)
+                .filter(Objects::nonNull)
+                .forEach(power -> {
+                    if (power.isBound() && power.value().getFactory() instanceof IOriginCallbackPower callbackPower) {
+                        if (!callbackPower.isReady(power.value(), this.player, isOrb)) {
+                            callbackPower.prepare(power.value(), this.player, isOrb);
+                            power.unwrapKey().ifPresent(k -> set.add((ResourceKey<ConfiguredPower<?, ?>>) (Object) k));
+                        } else
+                            callbackPower.onChosen(power.value(), this.player, isOrb);
+                    }
+                }));
+        if (!set.isEmpty() && !this.player.level.isClientSide()) {
+            OriginsCommon.CHANNEL.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) this.player), new S2COpenWaitingForPowersScreen(isOrb, set));
+        }
+    }
 
 	@Override
+    @SuppressWarnings({"rawtypes", "unchecked"})
 	public void onChosen(boolean isOrb) {
-		IPowerContainer.get(this.player).ifPresent(container -> container.getPowers().forEach(x -> {
+        Set<ResourceKey<ConfiguredPower<?, ?>>> set = Sets.newHashSet();
+        IPowerContainer.get(this.player).ifPresent(container -> container.getPowers().forEach(x -> {
             if (x.isBound() && x.value().getFactory() instanceof IOriginCallbackPower callbackPower) {
-                callbackPower.onChosen(x.value(), this.player, isOrb);
+                if (!callbackPower.isReady(x.value(), this.player, isOrb)) {
+                    callbackPower.prepare(x.value(), this.player, isOrb);
+                    x.unwrapKey().ifPresent(set::add);
+                } else
+                    callbackPower.onChosen(x.value(), this.player, isOrb);
             }
         }));
-	}
+        if (!set.isEmpty() && !this.player.level.isClientSide()) {
+            OriginsCommon.CHANNEL.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) this.player), new S2COpenWaitingForPowersScreen(isOrb, set));
+        }
+    }
 
 	@Override
 	public void onReload(@NotNull ICalioDynamicRegistryManager registry) {
