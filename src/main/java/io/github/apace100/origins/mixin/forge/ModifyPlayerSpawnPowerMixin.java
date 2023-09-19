@@ -41,7 +41,7 @@ public abstract class ModifyPlayerSpawnPowerMixin implements IOriginCallbackPowe
 
     @Override
     public <F extends PowerFactory<ModifyPlayerSpawnConfiguration>> boolean isReady(@NotNull ConfiguredPower<ModifyPlayerSpawnConfiguration, F> configuration, @NotNull Entity living, boolean isOrb) {
-        return isOrb || !ApoliConfigs.SERVER.separateSpawnFindingThread.get() || !ApoliAPI.getPowers().getResourceKey(configuration).map(SpawnLookupUtil::hasSpawnCached).orElse(false);
+        return isOrb || !ApoliConfigs.SERVER.separateSpawnFindingThread.get() || ApoliAPI.getPowers().getResourceKey(configuration).map(SpawnLookupUtil::hasSpawnCached).orElse(true);
     }
 
     @Override
