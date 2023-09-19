@@ -14,8 +14,10 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.FormattedCharSequence;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 import java.util.Set;
 
 public class WaitForPowersScreen extends OriginDisplayScreen {
@@ -53,13 +55,23 @@ public class WaitForPowersScreen extends OriginDisplayScreen {
     }
 
     private void renderWaitingText(@NotNull PoseStack matrices) {
+        int textWidth = windowWidth - 48;
+        int dotAmount = (int) (this.time / 10 % 4);
         MutableComponent component = Component.translatable("origins.gui.waiting_for_powers");
-        int dotAmount = (int) (this.time * 40 % 4);
         for (int i = 0; i < dotAmount; ++i) {
             component.append(".");
         }
-        int x = this.guiLeft + 18;
+        List<FormattedCharSequence> components = this.font.split(component, textWidth);
+        int x = this.guiLeft + (windowWidth / 2);
         int y = this.guiTop + 50;
-        drawCenteredString(matrices, this.font, component, x, y, 0xffffff);
+        for (FormattedCharSequence c : components) {
+            drawCenteredString(matrices, this.font, c, x, y, 0xffffff);
+            y += 12;
+        }
+    }
+
+    @Override
+    public boolean shouldCloseOnEsc() {
+        return false;
     }
 }
