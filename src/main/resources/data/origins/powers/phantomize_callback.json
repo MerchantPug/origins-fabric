@@ -8,12 +8,8 @@
       "inverted": true
     },
     "if_action": {
-      "type": "origins:delay",
-      "ticks": 1,
-      "action": {
-        "type": "origins:toggle",
-        "power": "origins:phantomize"
-      }
+      "type": "origins:toggle",
+      "power": "origins:phantomize"
     }
   },
   "hidden": true
