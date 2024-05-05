@@ -11,9 +11,7 @@ import io.github.apace100.origins.Origins;
 import io.github.apace100.origins.data.CompatibilityDataTypes;
 import io.github.apace100.origins.data.OriginsDataTypes;
 import io.github.apace100.origins.registry.ModComponents;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
-import net.minecraft.advancement.Advancement;
+import net.minecraft.advancement.AdvancementEntry;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
@@ -23,11 +21,7 @@ import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
+import java.util.*;
 
 public class Origin {
 
@@ -39,8 +33,8 @@ public class Origin {
         .add("impact", OriginsDataTypes.IMPACT, Impact.NONE)
         .add("loading_priority", SerializableDataTypes.INT, 0)
         .add("upgrades", OriginsDataTypes.UPGRADES, null)
-        .add("name", SerializableDataTypes.STRING, "")
-        .add("description", SerializableDataTypes.STRING, "");
+        .add("name", SerializableDataTypes.TEXT, null)
+        .add("description", SerializableDataTypes.TEXT, null);
 
     public static final Origin EMPTY;
 
@@ -56,30 +50,35 @@ public class Origin {
         return OriginRegistry.register(origin);
     }
 
-    public static HashMap<OriginLayer, Origin> get(Entity entity) {
+    public static Map<OriginLayer, Origin> get(Entity entity) {
         if(entity instanceof PlayerEntity) {
             return get((PlayerEntity)entity);
         }
         return new HashMap<>();
     }
 
-    public static HashMap<OriginLayer, Origin> get(PlayerEntity player) {
+    public static Map<OriginLayer, Origin> get(PlayerEntity player) {
         return ModComponents.ORIGIN.get(player).getOrigins();
     }
 
-    private Identifier identifier;
-    private List<PowerType<?>> powerTypes = new LinkedList<>();
+    private final List<OriginUpgrade> upgrades = new LinkedList<>();
+    private final List<PowerType<?>> powerTypes = new LinkedList<>();
+    private final Identifier identifier;
     private final ItemStack displayItem;
     private final Impact impact;
-    private boolean isChoosable;
-    private final int order;
-    private final int loadingPriority;
-    private List<OriginUpgrade> upgrades = new LinkedList<>();
-
-    private boolean isSpecial;
 
     private String nameTranslationKey;
     private String descriptionTranslationKey;
+
+    private Text name;
+    private Text description;
+
+    private final int loadingPriority;
+    private final int order;
+
+    private boolean isChoosable;
+    private boolean isSpecial;
+
 
     public Origin(Identifier id, ItemStack icon, Impact impact, int order, int loadingPriority) {
         this.identifier = id;
@@ -96,16 +95,13 @@ public class Origin {
     }
 
     public boolean hasUpgrade() {
-        return this.upgrades.size() > 0;
+        return !this.upgrades.isEmpty();
     }
 
-    public Optional<OriginUpgrade> getUpgrade(Advancement advancement) {
-        for(OriginUpgrade upgrade : upgrades) {
-            if(upgrade.getAdvancementCondition().equals(advancement.getId())) {
-                return Optional.of(upgrade);
-            }
-        }
-        return Optional.empty();
+    public Optional<OriginUpgrade> getUpgrade(AdvancementEntry advancement) {
+        return upgrades.stream()
+            .filter(ou -> ou.advancementCondition().equals(advancement.id()))
+            .findFirst();
     }
 
     public Identifier getIdentifier() {
@@ -136,8 +132,18 @@ public class Origin {
         return this;
     }
 
+    public Origin setNameText(Text name) {
+        this.name = name;
+        return this;
+    }
+
     public Origin setDescription(String description) {
         this.descriptionTranslationKey = description;
+        return this;
+    }
+
+    public Origin setDescriptionText(Text description) {
+        this.description = description;
         return this;
     }
 
@@ -170,7 +176,7 @@ public class Origin {
         return this.isChoosable;
     }
 
-    public Iterable<PowerType<?>> getPowerTypes() {
+    public List<PowerType<?>> getPowerTypes() {
         return powerTypes;
     }
 
@@ -184,53 +190,63 @@ public class Origin {
 
     public String getOrCreateNameTranslationKey() {
         if(nameTranslationKey == null || nameTranslationKey.isEmpty()) {
-            nameTranslationKey =
-                "origin." + identifier.getNamespace() + "." + identifier.getPath() + ".name";
+            nameTranslationKey = "origin." + identifier.getNamespace() + "." + identifier.getPath() + ".name";
         }
         return nameTranslationKey;
     }
 
     public MutableText getName() {
-        return Text.translatable(getOrCreateNameTranslationKey());
+        return name != null ? name.copy() : Text.translatable(getOrCreateNameTranslationKey());
     }
 
     public String getOrCreateDescriptionTranslationKey() {
         if(descriptionTranslationKey == null || descriptionTranslationKey.isEmpty()) {
-            descriptionTranslationKey =
-                "origin." + identifier.getNamespace() + "." + identifier.getPath() + ".description";
+            descriptionTranslationKey = "origin." + identifier.getNamespace() + "." + identifier.getPath() + ".description";
         }
         return descriptionTranslationKey;
     }
 
     public MutableText getDescription() {
-        return Text.translatable(getOrCreateDescriptionTranslationKey());
+        return description != null ? description.copy() : Text.translatable(getOrCreateDescriptionTranslationKey());
     }
 
     public int getOrder() {
         return this.order;
     }
 
-    public void write(PacketByteBuf buffer) {
+    public SerializableData.Instance toData() {
+
         SerializableData.Instance data = DATA.new Instance();
+
+        data.set("powers", powerTypes.stream().map(PowerType::getIdentifier).toList());
         data.set("icon", displayItem);
-        data.set("impact", impact);
+        data.set("unchoosable", !isChoosable);
         data.set("order", order);
+        data.set("impact", impact);
         data.set("loading_priority", loadingPriority);
-        data.set("unchoosable", !this.isChoosable);
-        data.set("powers", powerTypes.stream().map(PowerType::getIdentifier).collect(Collectors.toList()));
-        data.set("name", getOrCreateNameTranslationKey());
-        data.set("description", getOrCreateDescriptionTranslationKey());
         data.set("upgrades", upgrades);
-        DATA.write(buffer, data);
+        data.set("name", getName());
+        data.set("description", getDescription());
+
+        return data;
+
+    }
+
+    public void write(PacketByteBuf buffer) {
+        buffer.writeIdentifier(identifier);
+        DATA.write(buffer, toData());
     }
 
     @SuppressWarnings("unchecked")
     public static Origin createFromData(Identifier id, SerializableData.Instance data) {
-        Origin origin = new Origin(id,
-            (ItemStack)data.get("icon"),
-            (Impact)data.get("impact"),
+
+        Origin origin = new Origin(
+            id,
+            data.get("icon"),
+            data.get("impact"),
             data.getInt("order"),
-            data.getInt("loading_priority"));
+            data.getInt("loading_priority")
+        );
 
         if(data.getBoolean("unchoosable")) {
             origin.setUnchoosable();
@@ -238,7 +254,7 @@ public class Origin {
 
         ((List<Identifier>)data.get("powers")).forEach(powerId -> {
             try {
-                PowerType powerType = PowerTypeRegistry.get(powerId);
+                PowerType<?> powerType = PowerTypeRegistry.get(powerId);
                 origin.add(powerType);
             } catch(IllegalArgumentException e) {
                 Origins.LOGGER.error("Origin \"" + id + "\" contained unregistered power: \"" + powerId + "\"");
@@ -249,31 +265,39 @@ public class Origin {
             ((List<OriginUpgrade>)data.get("upgrades")).forEach(origin::addUpgrade);
         }
 
-        origin.setName(data.getString("name"));
-        origin.setDescription(data.getString("description"));
+        origin.setNameText(data.get("name"));
+        origin.setDescriptionText(data.get("description"));
 
         return origin;
     }
 
-    @Environment(EnvType.CLIENT)
     public static Origin read(PacketByteBuf buffer) {
-        Identifier identifier = Identifier.tryParse(buffer.readString(32767));
-        return createFromData(identifier, DATA.read(buffer));
+        Identifier id = new Identifier(buffer.readString());
+        return createFromData(id, DATA.read(buffer));
     }
 
     public static Origin fromJson(Identifier id, JsonObject json) {
         return createFromData(id, DATA.read(json));
     }
 
+    public JsonObject toJson() {
+        return DATA.write(toData());
+    }
+
     @Override
     public String toString() {
-        String str = "Origin(" + identifier.toString() + ")[";
-        for(PowerType<?> pt : powerTypes) {
-            str += PowerTypeRegistry.getId(pt);
-            str += ",";
+
+        StringBuilder str = new StringBuilder("Origin[id = " + identifier.toString() + ", powers = {");
+        String separator = "";
+
+        for (PowerType<?> powerType : powerTypes) {
+            str.append(separator).append(powerType.getIdentifier());
+            separator = ", ";
         }
-        str = str.substring(0, str.length() - 1) + "]";
-        return str;
+
+        str.append("}]");
+        return str.toString();
+
     }
 
     @Override
@@ -283,9 +307,7 @@ public class Origin {
 
     @Override
     public boolean equals(Object obj) {
-        if(obj instanceof Origin) {
-            return ((Origin)obj).identifier.equals(identifier);
-        }
-        return false;
+        return this == obj || (obj instanceof Origin other && this.identifier.equals(other.identifier));
     }
+
 }

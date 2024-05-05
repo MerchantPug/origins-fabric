@@ -5,24 +5,20 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import io.github.apace100.origins.Origins;
 import io.github.apace100.origins.component.OriginComponent;
-import io.github.apace100.origins.networking.ModPackets;
+import io.github.apace100.origins.networking.packet.s2c.OpenChooseOriginScreenS2CPacket;
 import io.github.apace100.origins.origin.Origin;
 import io.github.apace100.origins.origin.OriginLayer;
 import io.github.apace100.origins.origin.OriginLayers;
 import io.github.apace100.origins.origin.OriginRegistry;
 import io.github.apace100.origins.registry.ModComponents;
-import io.netty.buffer.Unpooled;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.command.argument.EntityArgumentType;
-import net.minecraft.network.PacketByteBuf;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 import static net.minecraft.server.command.CommandManager.argument;
 import static net.minecraft.server.command.CommandManager.literal;
@@ -108,8 +104,11 @@ public class OriginCommand {
 				
 			}
 			
-			if (processedTargets == 1) serverCommandSource.sendFeedback(Text.translatable("commands.origin.set.success.single", targets.iterator().next().getDisplayName().getString(), Text.translatable(originLayer.getTranslationKey()), origin.getName()), true);
-			else serverCommandSource.sendFeedback(Text.translatable("commands.origin.set.success.multiple", processedTargets, Text.translatable(originLayer.getTranslationKey()), origin.getName()), true);
+			if (processedTargets == 1) serverCommandSource.sendFeedback(() -> Text.translatable("commands.origin.set.success.single", targets.iterator().next().getDisplayName().getString(), originLayer.getName(), origin.getName()), true);
+			else {
+				int finalProcessedTargets = processedTargets;
+				serverCommandSource.sendFeedback(() -> Text.translatable("commands.origin.set.success.multiple", finalProcessedTargets, originLayer.getName(), origin.getName()), true);
+			}
 			
 		}
 		
@@ -142,8 +141,11 @@ public class OriginCommand {
 			}
 			
 			if (processedTargets == 0) serverCommandSource.sendError(Text.translatable("commands.execute.conditional.fail"));
-			else if (processedTargets == 1) serverCommandSource.sendFeedback(Text.translatable("commands.execute.conditional.pass"), true);
-			else serverCommandSource.sendFeedback(Text.translatable("commands.execute.conditional.pass_count", processedTargets), true);
+			else if (processedTargets == 1) serverCommandSource.sendFeedback(() -> Text.translatable("commands.execute.conditional.pass"), true);
+			else {
+				int finalProcessedTargets = processedTargets;
+				serverCommandSource.sendFeedback(() -> Text.translatable("commands.execute.conditional.pass_count", finalProcessedTargets), true);
+			}
 			
 		}
 		
@@ -168,7 +170,7 @@ public class OriginCommand {
 		OriginLayer originLayer = LayerArgumentType.getLayer(commandContext, "layer");
 		Origin origin = originComponent.getOrigin(originLayer);
 		
-		serverCommandSource.sendFeedback(Text.translatable("commands.origin.get.result", target.getDisplayName().getString(), Text.translatable(originLayer.getTranslationKey()), origin.getName(), origin.getIdentifier()), true);
+		serverCommandSource.sendFeedback(() -> Text.translatable("commands.origin.get.result", target.getDisplayName().getString(), originLayer.getName(), origin.getName(), origin.getIdentifier()), true);
 		
 		return 1;
 		
@@ -190,7 +192,7 @@ public class OriginCommand {
 			openLayerScreen(target, originLayer);
 		}
 
-		serverCommandSource.sendFeedback(Text.translatable("commands.origin.gui.layer", targets.size(), Text.translatable(originLayer.getTranslationKey())), true);
+		serverCommandSource.sendFeedback(() -> Text.translatable("commands.origin.gui.layer", targets.size(), originLayer.getName()), true);
 		return targets.size();
 
 	}
@@ -205,7 +207,6 @@ public class OriginCommand {
 
 		ServerCommandSource serverCommandSource = commandContext.getSource();
 		List<ServerPlayerEntity> targets = new ArrayList<>();
-		List<OriginLayer> originLayers = OriginLayers.getLayers().stream().toList();
 
 		switch (targetType) {
 			case INVOKER -> targets.add(serverCommandSource.getPlayerOrThrow());
@@ -213,12 +214,10 @@ public class OriginCommand {
 		}
 
 		for (ServerPlayerEntity target : targets) {
-			for (OriginLayer originLayer : originLayers) {
-				openLayerScreen(target, originLayer);
-			}
+			openLayerScreen(target);
 		}
 
-		serverCommandSource.sendFeedback(Text.translatable("commands.origin.gui.all", targets.size()), false);
+		serverCommandSource.sendFeedback(() -> Text.translatable("commands.origin.gui.all", targets.size()), false);
 		return targets.size();
 
 	}
@@ -242,24 +241,27 @@ public class OriginCommand {
 				origin = getRandomOrigin(target, originLayer);
 			}
 
-			if (targets.size() > 1) serverCommandSource.sendFeedback(Text.translatable("commands.origin.random.success.multiple", targets.size(), Text.translatable(originLayer.getTranslationKey())), true);
-			else if (targets.size() == 1) serverCommandSource.sendFeedback(Text.translatable("commands.origin.random.success.single", targets.iterator().next().getDisplayName().getString(), origin.getName(), Text.translatable(originLayer.getTranslationKey())), false);
+			if (targets.size() > 1) serverCommandSource.sendFeedback(() -> Text.translatable("commands.origin.random.success.multiple", targets.size(), originLayer.getName()), true);
+			else if (targets.size() == 1) {
+				Origin finalOrigin = origin;
+				serverCommandSource.sendFeedback(() -> Text.translatable("commands.origin.random.success.single", targets.iterator().next().getDisplayName().getString(), finalOrigin.getName(), originLayer.getName()), false);
+			}
 
 			return targets.size();
 
 		}
 
 		else {
-			serverCommandSource.sendError(Text.translatable("commands.origin.random.not_allowed", Text.translatable(originLayer.getTranslationKey())));
+			serverCommandSource.sendError(Text.translatable("commands.origin.random.not_allowed", originLayer.getName()));
 			return 0;
 		}
 
 	}
 
 	/**
-	 * 	Randomize the origins of the specified entities in all of the origin layers that allows to be randomized.
+	 * 	Randomize the origins of the specified entities in all the origin layers that allows to be randomized.
 	 * 	@param commandContext the command context
-	 * 	@return the number of players that had their origins randomized in all of the origin layers that allows to be randomized
+	 * 	@return the number of players that had their origins randomized in all the origin layers that allows to be randomized
 	 * 	@throws CommandSyntaxException if the entity is not found or if the entity is not an instance of {@link ServerPlayerEntity}
 	 */
 	private static int randomizeOrigins(CommandContext<ServerCommandSource> commandContext, TargetType targetType) throws CommandSyntaxException {
@@ -279,23 +281,40 @@ public class OriginCommand {
 			}
 		}
 
-		serverCommandSource.sendFeedback(Text.translatable("commands.origin.random.all", targets.size(), originLayers.size()), false);
+		serverCommandSource.sendFeedback(() -> Text.translatable("commands.origin.random.all", targets.size(), originLayers.size()), false);
 		return targets.size();
 
 	}
 
-	private static void openLayerScreen(ServerPlayerEntity target, OriginLayer originLayer) {
+	private static void openLayerScreen(ServerPlayerEntity target) {
+		openLayerScreen(target, null);
+	}
 
-		OriginComponent originComponent = ModComponents.ORIGIN.get(target);
-		PacketByteBuf buffer = new PacketByteBuf(Unpooled.buffer());
+	private static void openLayerScreen(ServerPlayerEntity target, @Nullable OriginLayer layer) {
 
-		if (originLayer.isEnabled()) originComponent.setOrigin(originLayer, Origin.EMPTY);
+		OriginComponent component = ModComponents.ORIGIN.get(target);
+		List<OriginLayer> layersToProcess = new LinkedList<>();
 
-		originComponent.checkAutoChoosingLayers(target, false);
-		originComponent.sync();
+		if (layer != null) {
+			layersToProcess.add(layer);
+		} else {
+			layersToProcess.addAll(OriginLayers.getLayers());
+		}
 
-		buffer.writeBoolean(false);
-		ServerPlayNetworking.send(target, ModPackets.OPEN_ORIGIN_SCREEN, buffer);
+		layersToProcess
+			.stream()
+			.filter(OriginLayer::isEnabled)
+			.forEach(ol -> component.setOrigin(ol, Origin.EMPTY));
+
+		boolean originAutomaticallyAssigned = component.checkAutoChoosingLayers(target, false);
+		int originOptions = layer != null ? layer.getOriginOptionCount(target) : OriginLayers.getOriginOptionCount(target);
+
+		component.selectingOrigin(!originAutomaticallyAssigned || originOptions > 0);
+		component.sync();
+
+		if (component.isSelectingOrigin()) {
+			ServerPlayNetworking.send(target, new OpenChooseOriginScreenS2CPacket(false));
+		}
 
 	}
 

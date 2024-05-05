@@ -1,35 +1,37 @@
 package io.github.apace100.origins.badge;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
+import com.google.gson.*;
 import io.github.apace100.apoli.integration.PostPowerLoadCallback;
 import io.github.apace100.apoli.integration.PrePowerReloadCallback;
 import io.github.apace100.apoli.power.*;
 import io.github.apace100.calio.registry.DataObjectRegistry;
+import io.github.apace100.calio.util.DynamicIdentifier;
 import io.github.apace100.origins.Origins;
 import io.github.apace100.origins.integration.AutoBadgeCallback;
 import io.github.apace100.origins.networking.ModPackets;
-import io.netty.buffer.Unpooled;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
+import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.inventory.CraftingInventory;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.recipe.Recipe;
+import net.minecraft.recipe.RecipeEntry;
 import net.minecraft.recipe.ShapedRecipe;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public final class BadgeManager {
+
     public static final DataObjectRegistry<Badge> REGISTRY = new DataObjectRegistry.Builder<>(Origins.identifier("badge"), Badge.class)
         .readFromData("badges", true)
         .dataErrorHandler((id, exception) -> Origins.LOGGER.error("Failed to read badge " + id + ", caused by", exception))
         .defaultFactory(BadgeFactories.KEYBIND)
         .buildAndRegister();
+    public static final Identifier PHASE = Origins.identifier("phase/badge_manager");
+
     private static final Map<Identifier, List<Badge>> BADGES = new HashMap<>();
 
     private static final Identifier TOGGLE_BADGE_SPRITE = Origins.identifier("textures/gui/badge/toggle.png");
@@ -50,6 +52,21 @@ public final class BadgeManager {
         PowerTypes.registerAdditionalData("badges", BadgeManager::readCustomBadges);
         PostPowerLoadCallback.EVENT.register(BadgeManager::readAutoBadges);
         AutoBadgeCallback.EVENT.register(BadgeManager::createAutoBadges);
+        ServerLifecycleEvents.SYNC_DATA_PACK_CONTENTS.addPhaseOrdering(PowerTypes.PHASE, PHASE);
+        ServerLifecycleEvents.SYNC_DATA_PACK_CONTENTS.register(PHASE, (player, joined) -> sync(player));
+    }
+
+    public static void sync(ServerPlayerEntity player) {
+
+        PacketByteBuf badgesBuf = PacketByteBufs.create();
+        REGISTRY.sync(player);
+
+        badgesBuf.writeMap(BADGES,
+            PacketByteBuf::writeIdentifier,
+            (valueBuf, badges) -> valueBuf.writeCollection(badges, REGISTRY::writeDataObject));
+
+        ServerPlayNetworking.send(player, ModPackets.BADGE_LIST, badgesBuf);
+
     }
 
     public static void register(BadgeFactory factory) {
@@ -57,104 +74,122 @@ public final class BadgeManager {
     }
 
     public static void putPowerBadge(Identifier powerId, Badge badge) {
-        List<Badge> badgeList = BADGES.computeIfAbsent(powerId, id -> new LinkedList<>());
-        badgeList.add(badge);
+        BADGES
+            .computeIfAbsent(powerId, id -> new LinkedList<>())
+            .add(badge);
+    }
+
+    public static void putPowerBadges(Identifier powerId, Collection<Badge> badges) {
+        BADGES
+            .computeIfAbsent(powerId, id -> new LinkedList<>())
+            .addAll(badges);
     }
 
     public static List<Badge> getPowerBadges(Identifier powerId) {
-        return BADGES.computeIfAbsent(powerId, id -> new LinkedList<>());
+        return BADGES.getOrDefault(powerId, List.of());
+    }
+
+    public static boolean hasPowerBadges(Identifier powerId) {
+        return BADGES.containsKey(powerId);
+    }
+
+    public static boolean hasPowerBadges(PowerType<?> powerType) {
+        return hasPowerBadges(powerType.getIdentifier());
     }
 
     public static void clear() {
         BADGES.clear();
     }
 
-    public static void sync(ServerPlayerEntity player) {
-        REGISTRY.sync(player);
-        PacketByteBuf badgeData = new PacketByteBuf(Unpooled.buffer());
-        badgeData.writeInt(BADGES.size());
-        BADGES.forEach((id, list) -> {
-            badgeData.writeIdentifier(id);
-            badgeData.writeInt(list.size());
-            list.forEach(badge -> badge.writeBuf(badgeData));
-        });
-        ServerPlayNetworking.send(player, ModPackets.BADGE_LIST, badgeData);
-    }
-
     public static void readCustomBadges(Identifier powerId, Identifier factoryId, boolean isSubPower, JsonElement data, PowerType<?> powerType) {
-        if(!(powerType.isHidden() || isSubPower)) {
-            if(data.isJsonArray()) {
-                BADGES.computeIfAbsent(powerId, id -> new LinkedList<>());
-                for(JsonElement badgeJson : data.getAsJsonArray()) {
-                    if(badgeJson.isJsonPrimitive()) {
-                        Identifier badgeId = Identifier.tryParse(badgeJson.getAsString());
-                        if(badgeId != null) {
-                            Badge badge = REGISTRY.get(badgeId);
-                            if(badge != null) {
-                                putPowerBadge(powerId, badge);
-                            } else {
-                                Origins.LOGGER.error("\"badges\" field in power \"{}\" is referring to an undefined badge \"{}\"!", powerId, badgeId);
-                            }
-                        } else {
-                            Origins.LOGGER.error("\"badges\" field in power \"{}\" is not a valid identifier!", powerId);
-                        }
-                    } else if(badgeJson.isJsonObject()) {
-                        try {
-                            putPowerBadge(powerId, REGISTRY.readDataObject(badgeJson));
-                        } catch(Exception exception) {
-                            Origins.LOGGER.error("\"badges\" field in power \"" + powerId
-                                + "\" contained an JSON object entry that cannot be resolved!", exception);
-                        }
-                    } else {
-                        Origins.LOGGER.error("\"badges\" field in power \"" + powerId
-                            + "\" contained an entry that was a JSON array, which is not allowed!");
-                    }
-                }
-            } else {
-                Origins.LOGGER.error("\"badges\" field in power \"" + powerId + "\" should be an array.");
-            }
-        }
-    }
 
-    public static void readAutoBadges(Identifier powerId, Identifier factoryId, boolean isSubPower, JsonObject json, PowerType<?> powerType) {
-        if(BADGES.containsKey(powerId) || powerType.isHidden() || isSubPower) {
-            // No auto-badges should be created if:
-            // - The power has custom badges defined in the data
-            // - The power is hidden
-            // - The power is a sub-power
+        if (powerType.isHidden() || isSubPower) {
             return;
         }
-        if(powerType instanceof MultiplePowerType<?> mp) {
-            // Multiple powers retrieve their automatic badges from all sub-powers
-            List<Badge> badgeList = BADGES.computeIfAbsent(powerId, id -> new LinkedList<>());
-            mp.getSubPowers().stream().map(PowerTypeRegistry::get).forEach(subPowerType ->
-                AutoBadgeCallback.EVENT.invoker().createAutoBadge(subPowerType.getIdentifier(), subPowerType, badgeList)
-            );
-        } else {
-            AutoBadgeCallback.EVENT.invoker()
+
+        try {
+
+            if (!(data instanceof JsonArray dataArray)) {
+                throw new JsonSyntaxException("\"badges\" should be a JSON array!");
+            }
+
+            List<Badge> badges = BADGES.computeIfAbsent(powerId, id -> new LinkedList<>());
+            for (JsonElement badgeJson : dataArray) {
+
+                Badge badge;
+                if (badgeJson instanceof JsonObject badgeObject) {
+                    badge = REGISTRY.readDataObject(badgeObject);
+                }
+
+                else if (badgeJson instanceof JsonPrimitive badgePrimitive) {
+                    Identifier badgeId = DynamicIdentifier.of(badgePrimitive);
+                    badge = REGISTRY.get(badgeId);
+                }
+
+                else {
+                    throw new JsonSyntaxException("Nested JSON arrays are not allowed!");
+                }
+
+                badges.add(badge);
+
+            }
+
+        } catch (Exception e) {
+            Origins.LOGGER.error("There was a problem parsing badges of power \"{}\": {}", powerId, e.getMessage());
+        }
+
+    }
+
+    /**
+     *  <p>Attempts to generate badges automatically for each power post-registration. Badges will only be generated if the power fulfills
+     *  certain conditions:</p>
+     *
+     *  <ol>
+     *      <li>The power doesn't have any badges defined in the {@code badges} field of its JSON.</li>
+     *      <li>The power doesn't use the {@code multiple} power type.
+     *      <li>The power is not manually hidden.</li>
+     *  </ol>
+     */
+    public static void readAutoBadges(Identifier powerId, Identifier factoryId, boolean isSubPower, JsonObject json, PowerType<?> powerType) {
+
+        if (!hasPowerBadges(powerId) && !(powerType instanceof MultiplePowerType<?>) && (isSubPower || !powerType.isHidden())) {
+            AutoBadgeCallback.EVENT
+                .invoker()
                 .createAutoBadge(powerId, powerType, BADGES.computeIfAbsent(powerId, id -> new LinkedList<>()));
         }
+
     }
 
     public static void createAutoBadges(Identifier powerId, PowerType<?> powerType, List<Badge> badgeList) {
+
         Power power = powerType.create(null);
-        if(power instanceof Active active) {
+
+        if (power instanceof Active active) {
+
             boolean toggle = active instanceof TogglePower || active instanceof ToggleNightVisionPower;
             Identifier autoBadgeId = toggle ? TOGGLE_BADGE_ID : ACTIVE_BADGE_ID;
-            if(REGISTRY.containsId(autoBadgeId)) {
+
+            if (REGISTRY.containsId(autoBadgeId)) {
                 badgeList.add(REGISTRY.get(autoBadgeId));
             } else {
-                badgeList.add(new KeybindBadge(toggle ? TOGGLE_BADGE_SPRITE : ACTIVE_BADGE_SPRITE,
-                    toggle ? "origins.gui.badge.toggle"
-                        : "origins.gui.badge.active"
-                ));
+
+                Identifier spriteId = toggle ? TOGGLE_BADGE_SPRITE : ACTIVE_BADGE_SPRITE;
+                String key = toggle ? "origins.gui.badge.toggle" : "origins.gui.badge.active";
+
+                badgeList.add(new KeybindBadge(spriteId, key));
+
             }
-        } else if(power instanceof RecipePower recipePower) {
-            Recipe<CraftingInventory> recipe = recipePower.getRecipe();
-            String type = recipe instanceof ShapedRecipe ? "shaped" : "shapeless";
-            badgeList.add(new CraftingRecipeBadge(RECIPE_BADGE_SPRITE, recipe,
-                Text.translatable("origins.gui.badge.recipe.crafting." + type), null
+
+        } else if (power instanceof RecipePower recipePower) {
+
+            RecipeEntry<Recipe<CraftingInventory>> entry = recipePower.getRecipe();
+            String type = (Recipe<?>) entry.value() instanceof ShapedRecipe ? "shaped" : "shapeless";
+
+            badgeList.add(new CraftingRecipeBadge(
+                RECIPE_BADGE_SPRITE, entry, Text.translatable("origins.gui.badge.recipe.crafting." + type), null
             ));
+
         }
+
     }
 }

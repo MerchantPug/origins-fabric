@@ -6,8 +6,7 @@ import com.google.gson.JsonPrimitive;
 import io.github.apace100.apoli.Apoli;
 import io.github.apace100.apoli.power.PowerType;
 import io.github.apace100.apoli.power.PowerTypes;
-import io.github.apace100.apoli.util.NamespaceAlias;
-import io.github.apace100.calio.mixin.CriteriaRegistryInvoker;
+import io.github.apace100.apoli.util.IdentifierAlias;
 import io.github.apace100.calio.resource.OrderedResourceListenerInitializer;
 import io.github.apace100.calio.resource.OrderedResourceListenerManager;
 import io.github.apace100.origins.badge.BadgeManager;
@@ -20,6 +19,7 @@ import io.github.apace100.origins.power.OriginsEntityConditions;
 import io.github.apace100.origins.power.OriginsPowerTypes;
 import io.github.apace100.origins.registry.*;
 import io.github.apace100.origins.util.ChoseOriginCriterion;
+import io.github.apace100.origins.util.OriginLootCondition;
 import io.github.apace100.origins.util.OriginsConfigSerializer;
 import io.github.apace100.origins.util.OriginsJsonConfigSerializer;
 import me.shedaniel.autoconfig.AutoConfig;
@@ -29,9 +29,13 @@ import me.shedaniel.autoconfig.serializer.ConfigSerializer;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.resource.IdentifiableResourceReloadListener;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.advancement.criterion.Criteria;
 import net.minecraft.item.ItemGroups;
+import net.minecraft.registry.Registries;
+import net.minecraft.registry.Registry;
 import net.minecraft.resource.ResourceType;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.JsonHelper;
@@ -74,7 +78,7 @@ public class Origins implements ModInitializer, OrderedResourceListenerInitializ
 			});
 		config = AutoConfig.getConfigHolder(ServerConfig.class).getConfig();
 
-		NamespaceAlias.addAlias(MODID, "apoli");
+		IdentifierAlias.addNamespaceAlias(MODID, "apoli");
 
 		OriginsPowerTypes.register();
 		OriginsEntityConditions.register();
@@ -86,16 +90,16 @@ public class Origins implements ModInitializer, OrderedResourceListenerInitializ
 		ModEnchantments.register();
 		ModEntities.register();
 		ModLoot.registerLootTables();
+		ModComponents.register();
 		Origin.init();
 
-		CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
-			OriginCommand.register(dispatcher);
-		});
-		ItemGroupEvents.modifyEntriesEvent(ItemGroups.TOOLS).register((content) -> {
-			content.add(ModItems.ORB_OF_ORIGIN);
-		});
+		CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> OriginCommand.register(dispatcher));
+		ItemGroupEvents.modifyEntriesEvent(ItemGroups.TOOLS).register((content) -> content.add(ModItems.ORB_OF_ORIGIN));
 
-		CriteriaRegistryInvoker.callRegister(ChoseOriginCriterion.INSTANCE);
+		Criteria.register(ChoseOriginCriterion.ID.toString(), ChoseOriginCriterion.INSTANCE);
+		Registry.register(Registries.LOOT_CONDITION_TYPE, identifier("origin"), OriginLootCondition.TYPE);
+
+		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> ModComponents.ORIGIN.get(handler.player).selectingOrigin(false));
 	}
 
 	public static void serializeConfig() {
