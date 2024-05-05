@@ -3,7 +3,9 @@ package io.github.apace100.origins.origin;
 import carpet.patches.EntityPlayerMPFake;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
 import dev.onyxstudios.cca.api.v3.component.ComponentProvider;
+import io.github.apace100.apoli.util.ApoliResourceConditions;
 import io.github.apace100.calio.data.IdentifiableMultiJsonDataLoader;
 import io.github.apace100.calio.data.MultiJsonDataContainer;
 import io.github.apace100.calio.data.SerializableData;
@@ -182,6 +184,10 @@ public class OriginLayers extends IdentifiableMultiJsonDataLoader implements Ide
 
                 Origins.LOGGER.info("Trying to read origin layer file \"{}\" from data pack [{}]", id, packName);
 
+                if (!isResourceConditionValid(id, jsonElement.getAsJsonObject())) {
+                    return;
+                }
+
                 OriginLayer layer = OriginLayer.fromJson(id, jsonElement.getAsJsonObject());
                 int loadingPriority = layer.getLoadingPriority();
 
@@ -189,6 +195,8 @@ public class OriginLayers extends IdentifiableMultiJsonDataLoader implements Ide
                     Origins.LOGGER.warn("Ignoring replaced duplicate origin layer \"{}\" with a lower loading priority.", id);
                     return;
                 }
+
+                layer.getConditionedOrigins().forEach(co -> co.origins().removeIf(OriginRegistry::isDisabled));
 
                 List<String> invalidOrigins = layer.getConditionedOrigins()
                     .stream()
@@ -302,6 +310,10 @@ public class OriginLayers extends IdentifiableMultiJsonDataLoader implements Ide
 
     public static void clear() {
         LAYERS.clear();
+    }
+
+    private boolean isResourceConditionValid(Identifier id, JsonObject jo) {
+        return ApoliResourceConditions.test(id, jo);
     }
 
     @Override

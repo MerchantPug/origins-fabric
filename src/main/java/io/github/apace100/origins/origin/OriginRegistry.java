@@ -8,12 +8,14 @@ import net.minecraft.util.Identifier;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 public class OriginRegistry {
 
     private static final Map<Identifier, Origin> idToOrigin = new HashMap<>();
+    private static final Set<Identifier> disabledOrigins = new HashSet<>();
 
     public static Origin register(Origin origin) {
         return register(origin.getIdentifier(), origin);
@@ -33,6 +35,15 @@ public class OriginRegistry {
     protected static Origin update(Identifier id, Origin origin) {
         idToOrigin.remove(id);
         return register(id, origin);
+    }
+
+    protected static void disable(Identifier id) {
+        remove(id);
+        disabledOrigins.add(id);
+    }
+
+    public static boolean isDisabled(Identifier id) {
+        return disabledOrigins.contains(id);
     }
 
     public static int size() {

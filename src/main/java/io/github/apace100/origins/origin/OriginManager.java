@@ -2,8 +2,10 @@ package io.github.apace100.origins.origin;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
 import io.github.apace100.apoli.Apoli;
 import io.github.apace100.apoli.power.PowerTypes;
+import io.github.apace100.apoli.util.ApoliResourceConditions;
 import io.github.apace100.calio.data.IdentifiableMultiJsonDataLoader;
 import io.github.apace100.calio.data.MultiJsonDataContainer;
 import io.github.apace100.calio.data.SerializableData;
@@ -46,6 +48,13 @@ public class OriginManager extends IdentifiableMultiJsonDataLoader implements Id
 				SerializableData.CURRENT_NAMESPACE = id.getNamespace();
 				SerializableData.CURRENT_PATH = id.getPath();
 
+				if (!isResourceConditionValid(id, jsonElement.getAsJsonObject())) {
+					if (!OriginRegistry.contains(id)) {
+						OriginRegistry.disable(id);
+					}
+					return;
+				}
+
 				Origin origin = Origin.fromJson(id, jsonElement.getAsJsonObject());
 				int loadingPriority = origin.getLoadingPriority();
 
@@ -86,6 +95,10 @@ public class OriginManager extends IdentifiableMultiJsonDataLoader implements Id
 		SerializableData.CURRENT_NAMESPACE = null;
 		SerializableData.CURRENT_PATH = null;
 
+	}
+
+	private boolean isResourceConditionValid(Identifier id, JsonObject jo) {
+		return ApoliResourceConditions.test(id, jo);
 	}
 
 	@Override
